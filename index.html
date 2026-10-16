@@ -207,6 +207,16 @@ textarea {
 .guide ol, .guide ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; }
 .guide code { font-family: var(--font-num); font-size: 13.5px; background: var(--soft); padding: 1px 5px; border-radius: 3px; }
 .limit { font-size: 14.5px; padding: 10px 12px; border-radius: 8px; background: var(--soft); }
+.classes { display: flex; flex-direction: column; }
+.classe { display: flex; flex-direction: column; gap: 8px; padding: 14px 0; border-top: 1px solid var(--line); }
+.classe:first-child { border-top: 0; padding-top: 0; }
+.classe-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.classe-head h3 { font-size: 16px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.risco { font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
+.risco.baixo { color: var(--good); } .risco.medio { color: var(--warn); } .risco.alto { color: var(--bad); }
+.classe dl { margin: 0; display: grid; grid-template-columns: 92px 1fr; gap: 4px 12px; font-size: 14px; }
+.classe dt { color: var(--muted); font-weight: 600; }
+.classe dd { margin: 0; }
 footer { font-size: 12.5px; color: var(--muted); }
 
 /* Bottom tab bar */
@@ -499,7 +509,69 @@ footer { font-size: 12.5px; color: var(--muted); }
   <section class="view guide" id="view-acoes" aria-labelledby="h-acoes" hidden>
     <div class="view-head">
       <p class="eyebrow">Para estudar, não para seguir</p>
-      <h1 id="h-acoes">Ações</h1>
+      <h1 id="h-acoes">Explorar</h1>
+    </div>
+
+    <div class="card">
+      <h2>Para conhecer</h2>
+      <p class="hint">Outros tipos de investimento que existem no Nubank e o papel que cada um teria na sua carteira. Nenhum entra no plano sozinho.</p>
+      <div class="classes">
+        <div class="classe">
+          <div class="classe-head"><h3>FIIs <span class="ticker">fundos imobiliários</span></h3><span class="risco medio">Risco médio</span></div>
+          <dl>
+            <dt>O que é</dt><dd>Cotas de fundos donos de imóveis (galpões, shoppings, escritórios) ou de crédito imobiliário. Os códigos terminam em 11.</dd>
+            <dt>Papel</dt><dd>Renda que cai todo mês na conta e diversifica a parte Brasil além de ações.</dd>
+            <dt>Imposto</dt><dd>Rendimentos mensais isentos para pessoa física (nos fundos que cumprem as regras). Lucro na venda: 20%.</dd>
+            <dt>Faz sentido</dt><dd>Quando você quiser renda mensal ou mais diversificação. A cota oscila como ação e cai quando os juros sobem.</dd>
+          </dl>
+        </div>
+        <div class="classe">
+          <div class="classe-head"><h3>Small caps <span class="ticker">SMAL11</span></h3><span class="risco alto">Risco alto</span></div>
+          <dl>
+            <dt>O que é</dt><dd>ETF com as empresas menores da bolsa brasileira.</dd>
+            <dt>Papel</dt><dd>Mais potencial de crescimento que o BOVA11, com mais sobe e desce. Costuma ir melhor quando os juros caem.</dd>
+            <dt>Imposto</dt><dd>15% sobre o lucro na venda, como todo ETF.</dd>
+            <dt>Faz sentido</dt><dd>Com carteira maior e estômago para quedas de 30% ou mais. Entraria dentro da fatia Brasil.</dd>
+          </dl>
+        </div>
+        <div class="classe">
+          <div class="classe-head"><h3>Tesouro IPCA+ longo <span class="ticker">2040, 2045, 2050</span></h3><span class="risco baixo">Risco baixo</span></div>
+          <dl>
+            <dt>O que é</dt><dd>O mesmo título que você já tem, com vencimento mais distante. O Tesouro Renda+ é a versão feita para aposentadoria.</dd>
+            <dt>Papel</dt><dd>Trava um ganho acima da inflação por décadas. Bom para dinheiro que você só vai usar daqui a 20 anos ou mais.</dd>
+            <dt>Imposto</dt><dd>Tabela regressiva: 22,5% sobre o lucro até 6 meses, caindo para 15% depois de 2 anos.</dd>
+            <dt>Faz sentido</dt><dd>Quando o 2032 estiver perto de vencer, ou se quiser separar uma parte para aposentadoria. Se vender antes, o preço pode estar abaixo do que pagou.</dd>
+          </dl>
+        </div>
+        <div class="classe">
+          <div class="classe-head"><h3>CDB, LCI e LCA <span class="ticker">inclui as caixinhas</span></h3><span class="risco baixo">Risco baixo</span></div>
+          <dl>
+            <dt>O que é</dt><dd>Você empresta dinheiro para o banco. Garantido pelo FGC até R$ 250 mil por banco.</dd>
+            <dt>Papel</dt><dd>Reserva de emergência e objetivos de 1 a 3 anos. Não é o motor do longo prazo.</dd>
+            <dt>Imposto</dt><dd>CDB: tabela regressiva (22,5% a 15%). LCI e LCA: isentas para pessoa física.</dd>
+            <dt>Faz sentido</dt><dd>Para guardar dinheiro que pode precisar logo. Sua reserva já cumpre esse papel.</dd>
+          </dl>
+        </div>
+        <div class="classe">
+          <div class="classe-head"><h3>Ouro <span class="ticker">GOLD11</span></h3><span class="risco medio">Risco médio</span></div>
+          <dl>
+            <dt>O que é</dt><dd>ETF que acompanha o preço do ouro.</dd>
+            <dt>Papel</dt><dd>Tende a segurar valor em crises e quando o dólar dispara. Não paga nada enquanto você segura.</dd>
+            <dt>Imposto</dt><dd>15% sobre o lucro na venda.</dd>
+            <dt>Faz sentido</dt><dd>Como seguro, no máximo uns 5% da carteira. Pode passar anos parado.</dd>
+          </dl>
+        </div>
+        <div class="classe">
+          <div class="classe-head"><h3>Cripto <span class="ticker">HASH11</span></h3><span class="risco alto">Risco muito alto</span></div>
+          <dl>
+            <dt>O que é</dt><dd>ETF com uma cesta de criptomoedas, como bitcoin e ethereum.</dd>
+            <dt>Papel</dt><dd>Aposta de alto potencial e alta perda. Já teve quedas de mais de 70%.</dd>
+            <dt>Imposto</dt><dd>15% sobre o lucro na venda.</dd>
+            <dt>Faz sentido</dt><dd>No máximo 2% a 5% da carteira, e só com dinheiro que você aceita perder.</dd>
+          </dl>
+        </div>
+      </div>
+      <p class="limit">Quer incluir algum? Faça isso na revisão anual: me peça no Claude, a gente define a nova meta (por exemplo, 35% Tesouro, 25% IVVB11, 25% Brasil e 15% FIIs) e eu atualizo a aba Comprar para considerar o novo investimento.</p>
     </div>
 
     <div class="card">
@@ -592,7 +664,7 @@ footer { font-size: 12.5px; color: var(--muted); }
   <nav aria-label="Seções">
     <a class="tab" href="#carteira" data-tab="carteira"><span class="tab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="14" rx="2.5"/><path d="M3 10h18"/><path d="M16 15h2"/><path d="M6 6V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1"/></svg></span>Carteira</a>
     <a class="tab" href="#comprar" data-tab="comprar"><span class="tab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V12"/><path d="M12 20V8"/><path d="M19 20V4"/><path d="M3 20h18"/></svg><span class="badge" id="badge-comprar" hidden></span></span>Comprar</a>
-    <a class="tab" href="#acoes" data-tab="acoes"><span class="tab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 20 20"/><path d="M7.5 12.5l2-2 1.5 1.5 2.5-3"/></svg></span>Ações</a>
+    <a class="tab" href="#acoes" data-tab="acoes"><span class="tab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 20 20"/><path d="M7.5 12.5l2-2 1.5 1.5 2.5-3"/></svg></span>Explorar</a>
     <a class="tab" href="#noticias" data-tab="noticias"><span class="tab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h13v14a1 1 0 0 0 1 1H6a2 2 0 0 1-2-2V5z"/><path d="M17 9h3v9a2 2 0 0 1-2 2"/><path d="M7.5 9h6"/><path d="M7.5 12.5h6"/><path d="M7.5 16h4"/></svg></span>Notícias</a>
     <a class="tab" href="#guia" data-tab="guia"><span class="tab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8 1c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17.2h.01"/></svg></span>Guia</a>
   </nav>
