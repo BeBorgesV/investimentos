@@ -1,0 +1,838 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Plano de Aportes: quanto comprar de Tesouro IPCA+ 2032, IVVB11 e BOVA11 todo mês, com boletim mensal do mercado.">
+<meta name="theme-color" content="#EDF0EB" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E1412" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Aportes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Plano de Aportes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: one ledger column on phone. Order follows the monthly ritual:
+   read the boletim, do the purchase slip, ask if in doubt, check the rules, log the month.
+   On wide screens the inputs sit left and the slip sits right. */
+:root {
+  --bg: #EDF0EB;
+  --surface: #FAFBF8;
+  --ink: #15201B;
+  --muted: #586860;
+  --line: #D2DAD4;
+  --soft: #E3E9E4;
+  --c-tesouro: #34519E;
+  --c-ivvb: #B06C17;
+  --c-brasil: #2B8656;
+  --warn: #8A5A0B;
+  --font-ui: "Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --font-num: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1412; --surface: #151D19; --ink: #E3EBE6; --muted: #92A39A;
+    --line: #27332D; --soft: #1C2621;
+    --c-tesouro: #8FA7EC; --c-ivvb: #E6AA5C; --c-brasil: #66C892; --warn: #E6B35C;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1412; --surface: #151D19; --ink: #E3EBE6; --muted: #92A39A;
+  --line: #27332D; --soft: #1C2621;
+  --c-tesouro: #8FA7EC; --c-ivvb: #E6AA5C; --c-brasil: #66C892; --warn: #E6B35C;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 16px;
+  line-height: 1.5;
+}
+.page {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+h1, h2, h3 { margin: 0; text-wrap: balance; }
+p { margin: 0; }
+a { color: inherit; text-underline-offset: 2px; }
+.num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+.eyebrow {
+  font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Header */
+.top { display: flex; flex-direction: column; gap: 10px; }
+h1 { font-size: clamp(32px, 7vw, 48px); font-weight: 800; letter-spacing: -0.02em; line-height: 1.05; }
+.lede { color: var(--muted); max-width: 60ch; }
+.targets { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.target {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 5px 10px; border: 1px solid var(--line); border-radius: 999px;
+  font-size: 13px; background: var(--surface);
+}
+.dot { width: 9px; height: 9px; border-radius: 50%; flex: none; display: inline-block; }
+.target .num { font-weight: 600; }
+
+/* Boletim */
+.boletim {
+  border-top: 3px solid var(--ink);
+  background: var(--surface);
+  border-radius: 0 0 8px 8px;
+  padding: 18px 18px 20px;
+  display: flex; flex-direction: column; gap: 16px;
+}
+.boletim-head { display: flex; justify-content: space-between; align-items: baseline; gap: 6px 16px; flex-wrap: wrap; }
+.boletim-head h2 { font-size: 22px; font-weight: 800; letter-spacing: -0.01em; }
+.stamp { font-size: 13px; color: var(--muted); }
+.stamp.stale { color: var(--warn); font-weight: 600; }
+.resumo { font-size: 17px; line-height: 1.55; max-width: 68ch; }
+.indic { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.indic > div { background: var(--surface); padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.indic .k { font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.indic .v { font-family: var(--font-num); font-variant-numeric: tabular-nums; font-size: 18px; font-weight: 600; overflow-wrap: anywhere; }
+.indic .n { font-size: 12.5px; color: var(--muted); }
+.noplano { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; align-items: baseline; padding: 12px 14px; background: var(--soft); border-radius: 6px; }
+.noplano .tag { font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.news { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.news li { padding: 12px 0; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 3px; }
+.news li:first-child { border-top: 0; padding-top: 0; }
+.news strong { font-size: 15.5px; }
+.news p { font-size: 14.5px; color: var(--muted); max-width: 72ch; }
+.news .src { font-size: 12.5px; color: var(--muted); }
+.boletim-empty { font-size: 15px; color: var(--muted); }
+
+/* One-time note */
+.once {
+  display: flex; gap: 12px; align-items: flex-start;
+  border: 1px dashed var(--warn); border-radius: 6px; padding: 12px 14px;
+  font-size: 15px;
+}
+.once strong { color: var(--warn); white-space: nowrap; }
+
+/* Main grid */
+.grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+@media (min-width: 880px) { .grid { grid-template-columns: 1fr 1.05fr; align-items: start; } }
+.grid > * { min-width: 0; }
+
+.panel { display: flex; flex-direction: column; gap: 18px; }
+.panel h2, .slip h2, .section h2 {
+  font-size: 18px; font-weight: 700; display: flex; align-items: baseline; gap: 10px;
+}
+.step {
+  font-family: var(--font-num); font-size: 13px; font-weight: 600;
+  width: 24px; height: 24px; border-radius: 50%;
+  display: inline-grid; place-items: center; flex: none;
+  background: var(--ink); color: var(--bg); transform: translateY(-2px);
+}
+.hint { font-size: 13px; color: var(--muted); }
+
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.field label { font-weight: 600; font-size: 15px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ticker {
+  font-family: var(--font-num); font-size: 12px; font-weight: 500;
+  padding: 1px 7px; border-radius: 4px; background: var(--soft); color: var(--muted);
+}
+.money {
+  display: flex; align-items: center; gap: 8px;
+  border: 1px solid var(--line); border-radius: 6px; background: var(--surface);
+  padding: 0 12px; transition: border-color .15s;
+}
+.money:focus-within { border-color: var(--ink); }
+.money span { color: var(--muted); font-family: var(--font-num); font-size: 15px; }
+.money input {
+  flex: 1; min-width: 0; width: 100%; border: 0; outline: 0; background: transparent; color: var(--ink);
+  font-family: var(--font-num); font-variant-numeric: tabular-nums; font-size: 18px;
+  padding: 11px 0;
+}
+.money input::placeholder { color: var(--muted); opacity: .75; }
+.pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+.pair > * { min-width: 0; }
+.pair .field label { font-size: 14px; }
+.group { display: flex; flex-direction: column; gap: 14px; }
+.divider { height: 1px; background: var(--line); }
+
+/* The purchase slip */
+.slip {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 20px 18px 18px;
+  display: flex; flex-direction: column; gap: 16px;
+}
+.slip h2 { justify-content: space-between; flex-wrap: wrap; }
+.slip h2 .when { font-size: 13px; font-weight: 500; color: var(--muted); }
+.buys { display: flex; flex-direction: column; }
+.buy {
+  display: grid; grid-template-columns: 4px 1fr auto; gap: 4px 14px;
+  padding: 14px 0; border-top: 1px dashed var(--line);
+}
+.buy:first-child { border-top: 0; padding-top: 4px; }
+.buy .bar-mark { grid-row: 1 / span 2; border-radius: 2px; }
+.buy .what { font-weight: 700; font-size: 16px; }
+.buy .how { grid-column: 2 / span 2; font-size: 13.5px; color: var(--muted); }
+.buy .amount {
+  font-family: var(--font-num); font-variant-numeric: tabular-nums;
+  font-size: clamp(20px, 5vw, 26px); font-weight: 600; text-align: right; white-space: nowrap;
+}
+.buy.skip .amount { color: var(--muted); font-weight: 400; }
+.leftover { font-size: 14px; padding: 10px 12px; border-radius: 6px; background: var(--soft); }
+.leftover .num { font-weight: 600; }
+
+.alloc { display: flex; flex-direction: column; gap: 8px; }
+.alloc-row { display: grid; grid-template-columns: 56px 1fr; gap: 10px; align-items: center; }
+.alloc-row .lbl { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.stack { display: flex; height: 22px; border-radius: 4px; overflow: hidden; background: var(--soft); }
+.seg {
+  height: 100%; display: grid; place-items: center; min-width: 0;
+  font-family: var(--font-num); font-size: 11.5px; font-weight: 600; color: var(--surface);
+  white-space: nowrap; overflow: hidden; transition: width .35s ease;
+}
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+button { font: inherit; cursor: pointer; }
+button.primary {
+  font-weight: 700; font-size: 15px;
+  background: var(--ink); color: var(--bg); border: 0; border-radius: 6px;
+  padding: 11px 18px;
+}
+button.primary:hover { opacity: .9; }
+button.primary:disabled { opacity: .45; cursor: default; }
+button.ghost {
+  font-size: 14px; font-weight: 600; background: transparent; color: var(--ink);
+  border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px;
+}
+button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--c-tesouro); outline-offset: 2px; }
+.status { font-size: 13.5px; color: var(--muted); }
+
+/* Ask Claude */
+.ask { display: flex; flex-direction: column; gap: 12px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  font-size: 13.5px; background: var(--surface); color: var(--ink);
+  border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; text-align: left;
+}
+.chip:hover { border-color: var(--ink); }
+textarea {
+  width: 100%; min-height: 76px; resize: vertical;
+  font: inherit; font-size: 16px; color: var(--ink); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px;
+}
+.answer {
+  white-space: pre-wrap; font-size: 15.5px; line-height: 1.6;
+  background: var(--surface); border-left: 3px solid var(--ink); padding: 12px 14px; border-radius: 0 6px 6px 0;
+  max-width: 72ch;
+}
+
+/* Lower sections */
+.lower { display: grid; grid-template-columns: 1fr; gap: 24px; }
+@media (min-width: 880px) { .lower { grid-template-columns: 1fr 1fr; } }
+.lower > * { min-width: 0; }
+.section { display: flex; flex-direction: column; gap: 12px; }
+.section ol, .section ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; }
+.section li { padding-left: 4px; }
+.section code { font-family: var(--font-num); font-size: 13.5px; background: var(--soft); padding: 1px 5px; border-radius: 3px; }
+.limit { font-size: 14.5px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+.limit .num { font-weight: 600; }
+
+.history .table-wrap { position: relative; overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 14px; }
+th, td { padding: 10px 12px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+th { font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+td { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+td:first-child { font-family: var(--font-ui); font-weight: 600; }
+tr:last-child td { border-bottom: 0; }
+.empty { font-size: 14.5px; color: var(--muted); padding: 16px; border: 1px dashed var(--line); border-radius: 8px; }
+
+footer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; max-width: 75ch; }
+
+@media (max-width: 420px) {
+  .slip, .boletim { padding-left: 14px; padding-right: 14px; }
+  .pair { grid-template-columns: 1fr; }
+  .indic { grid-template-columns: 1fr 1fr; }
+  .noplano { grid-template-columns: 1fr; }
+  .indic .v { font-size: 16px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+html { -webkit-text-size-adjust: 100%; }
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); color-scheme: light; }
+body { margin: 0; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+a.primary { display: inline-block; text-decoration: none; font-weight: 700; font-size: 15px; background: var(--ink); color: var(--bg); border-radius: 6px; padding: 11px 18px; }
+a.primary[aria-disabled="true"] { opacity: .45; pointer-events: none; }
+button.del { font-size: 12.5px; font-weight: 600; background: transparent; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 3px 8px; }
+button.del:hover { color: var(--ink); border-color: var(--ink); }
+a:focus-visible { outline: 2px solid var(--c-tesouro); outline-offset: 2px; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="top">
+    <p class="eyebrow">Perfil intermediário · longo prazo</p>
+    <h1>Plano de Aportes</h1>
+    <p class="lede">Sua cola de investimentos. O Claude atualiza o boletim todo dia 1º com juros, bolsa, dólar e as notícias que importam. Você copia do app do banco quanto tem e compra exatamente o que aparecer em "Compre isto". Seus valores ficam guardados só neste celular.</p>
+    <div class="targets" aria-label="Meta da carteira">
+      <span class="target"><span class="dot" style="background:var(--c-tesouro)"></span>Tesouro IPCA+ 2032 <span class="num">40%</span></span>
+      <span class="target"><span class="dot" style="background:var(--c-ivvb)"></span>IVVB11 · EUA <span class="num">30%</span></span>
+      <span class="target"><span class="dot" style="background:var(--c-brasil)"></span>BOVA11 · Brasil <span class="num">30%</span></span>
+    </div>
+  </header>
+
+  <section class="boletim" aria-labelledby="h-bol" aria-live="polite">
+    <div class="boletim-head">
+      <h2 id="h-bol">Boletim do mês</h2>
+      <span class="stamp" id="bol-stamp"></span>
+    </div>
+    <p class="boletim-empty" id="bol-empty">Carregando o boletim…</p>
+    <div id="bol-body" hidden>
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <p class="resumo" id="bol-resumo"></p>
+        <div class="indic" id="bol-indic"></div>
+        <div class="noplano"><span class="tag">No seu plano</span><span id="bol-plano"></span></div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <p class="eyebrow">O que aconteceu</p>
+          <ul class="news" id="bol-news"></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="grid">
+    <section class="panel" aria-labelledby="h-have">
+      <div class="group">
+        <h2 id="h-have"><span class="step">1</span>O que você tem hoje</h2>
+        <p class="hint">No app do Nubank: Investimentos → Minha carteira.</p>
+        <div class="field">
+          <label for="tesouro">Tesouro direto <span class="ticker">IPCA+ 2032</span></label>
+          <div class="money"><span>R$</span><input id="tesouro" inputmode="decimal" autocomplete="off"></div>
+          <p class="hint">O total da linha "Tesouro direto". Some compras que ainda não caíram.</p>
+        </div>
+        <div class="field">
+          <label for="ivvb">IVVB11 <span class="ticker">S&amp;P 500</span></label>
+          <div class="money"><span>R$</span><input id="ivvb" inputmode="decimal" autocomplete="off"></div>
+          <p class="hint">Toque em "Bolsa de valores" e veja o valor só do IVVB11.</p>
+        </div>
+        <div class="field">
+          <label for="brasil">Resto da bolsa <span class="ticker">BOVA11 + ações</span></label>
+          <div class="money"><span>R$</span><input id="brasil" inputmode="decimal" autocomplete="off"></div>
+          <p class="hint">Tudo que está em "Bolsa de valores", menos o IVVB11.</p>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="group">
+        <h2><span class="step">2</span>Quanto vai investir agora</h2>
+        <div class="field">
+          <label for="aporte">Saldo para investir</label>
+          <div class="money"><span>R$</span><input id="aporte" inputmode="decimal" autocomplete="off"></div>
+        </div>
+        <div class="pair">
+          <div class="field">
+            <label for="precoIvvb">Preço da cota <span class="ticker">IVVB11</span></label>
+            <div class="money"><span>R$</span><input id="precoIvvb" inputmode="decimal" autocomplete="off"></div>
+          </div>
+          <div class="field">
+            <label for="precoBova">Preço da cota <span class="ticker">BOVA11</span></label>
+            <div class="money"><span>R$</span><input id="precoBova" inputmode="decimal" autocomplete="off"></div>
+          </div>
+        </div>
+        <p class="hint" id="preco-hint">Digite o preço da cota que aparece no app para ver quantas cotas comprar.</p>
+      </div>
+    </section>
+
+    <section class="slip" aria-labelledby="h-buy" aria-live="polite">
+      <h2 id="h-buy"><span><span class="step">3</span> Compre isto</span><span class="when" id="mesLabel"></span></h2>
+      <div class="buys">
+        <div class="buy" id="row-tesouro">
+          <span class="bar-mark" style="background:var(--c-tesouro)"></span>
+          <span class="what">Tesouro IPCA+ 2032</span>
+          <span class="amount" data-amount></span>
+          <span class="how" data-how></span>
+        </div>
+        <div class="buy" id="row-ivvb">
+          <span class="bar-mark" style="background:var(--c-ivvb)"></span>
+          <span class="what">IVVB11</span>
+          <span class="amount" data-amount></span>
+          <span class="how" data-how></span>
+        </div>
+        <div class="buy" id="row-brasil">
+          <span class="bar-mark" style="background:var(--c-brasil)"></span>
+          <span class="what">BOVA11</span>
+          <span class="amount" data-amount></span>
+          <span class="how" data-how></span>
+        </div>
+      </div>
+      <p class="leftover" id="leftover" hidden></p>
+
+      <div class="alloc" aria-label="Divisão da carteira">
+        <div class="alloc-row"><span class="lbl">Hoje</span><div class="stack" id="bar-hoje"></div></div>
+        <div class="alloc-row"><span class="lbl">Depois</span><div class="stack" id="bar-depois"></div></div>
+        <div class="alloc-row"><span class="lbl">Meta</span><div class="stack" id="bar-meta"></div></div>
+        <div class="legend">
+          <span><span class="dot" style="background:var(--c-tesouro)"></span>Tesouro</span>
+          <span><span class="dot" style="background:var(--c-ivvb)"></span>IVVB11</span>
+          <span><span class="dot" style="background:var(--c-brasil)"></span>Brasil</span>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="primary" id="registrar" type="button" disabled>Registrar mês</button>
+        <span class="status" id="status">Depois de comprar, registre o aporte para acompanhar a evolução.</span>
+      </div>
+    </section>
+  </div>
+
+  <section class="section ask" aria-labelledby="h-ask" id="ask">
+    <h2 id="h-ask">Pergunte ao Claude</h2>
+    <p class="hint">Escreva a dúvida e toque em "Perguntar no Claude". O app do Claude abre com a pergunta, seu plano, seus números e o resumo do mês já escritos.</p>
+    <div class="chips" id="chips">
+      <button class="chip" type="button">Por que a calculadora mandou pular o Tesouro?</button>
+      <button class="chip" type="button">O que a eleição muda para mim?</button>
+      <button class="chip" type="button">O que é marcação a mercado?</button>
+      <button class="chip" type="button">Vale a pena escolher ações?</button>
+    </div>
+    <label for="pergunta" class="hint" style="font-weight:600;color:var(--ink)">Sua pergunta</label>
+    <textarea id="pergunta" placeholder="Ex.: o dólar subiu, isso muda alguma coisa no IVVB11?"></textarea>
+    <div class="actions">
+      <a class="primary" id="perguntar" target="_blank" rel="noopener" aria-disabled="true">Perguntar no Claude</a>
+    </div>
+  </section>
+
+  <div class="lower">
+    <section class="section" aria-labelledby="h-how">
+      <h2 id="h-how">Como comprar no app</h2>
+      <ol>
+        <li><strong>Tesouro:</strong> toque em Investir, vá em Tesouro Direto, escolha <strong>Tesouro IPCA+ 2032</strong> e digite o valor em reais.</li>
+        <li><strong>ETFs:</strong> toque em Investir e busque <code>IVVB11</code> ou <code>BOVA11</code>. Se o app pedir lote de 10 cotas, use <code>IVVB11F</code> ou <code>BOVA11F</code>, o mercado fracionário, que deixa comprar 1 cota.</li>
+        <li>Escolha <strong>comprar</strong>, digite a quantidade de cotas e confirme.</li>
+        <li>Volte aqui e toque em <strong>Registrar mês</strong>.</li>
+      </ol>
+    </section>
+
+    <section class="section" aria-labelledby="h-rules">
+      <h2 id="h-rules">Regras do plano</h2>
+      <ul>
+        <li><strong>Não venda.</strong> O equilíbrio vem dos aportes. Queda na bolsa é quando seu aporte compra mais barato.</li>
+        <li><strong>Não pule meses.</strong> Constância rende mais do que acertar o momento.</li>
+        <li><strong>Notícia informa, não manda.</strong> O boletim explica o cenário; a meta 40/30/30 só muda na revisão anual.</li>
+        <li><strong>Não mexa no Tesouro antes de 2032.</strong> No vencimento, reinvista num IPCA+ mais longo.</li>
+        <li><strong>Revise o plano uma vez por ano</strong>, ou quando seu salário mudar.</li>
+      </ul>
+    </section>
+
+    <section class="section" aria-labelledby="h-acoes">
+      <h2 id="h-acoes">Se quiser escolher ações</h2>
+      <p class="limit">Ações escolhidas por você entram na fatia Brasil, no lugar de parte do BOVA11, e somadas nunca passam de <strong>10% da carteira</strong>. Hoje isso dá <span class="num" id="limite-acoes">—</span>.</p>
+      <ul>
+        <li>Você sabe explicar em duas frases como a empresa ganha dinheiro?</li>
+        <li>O lucro cresceu nos últimos 5 anos, e não só no último?</li>
+        <li>A dívida é menor que uns 3 anos de lucro operacional?</li>
+        <li>Você manteria a ação se ela caísse 30% amanhã?</li>
+        <li>Você está comprando por estudo, não por dica de rede social ou manchete?</li>
+      </ul>
+      <p class="hint">Se alguma resposta for "não", o BOVA11 faz esse papel melhor.</p>
+    </section>
+
+    <section class="section history" aria-labelledby="h-hist" id="history">
+      <h2 id="h-hist">Histórico</h2>
+      <p class="empty" id="hist-empty">Nenhum aporte registrado ainda. Depois de fazer as compras, toque em "Registrar mês" e ele aparece aqui. O histórico fica salvo neste celular.</p>
+      <div class="table-wrap" id="hist-wrap" hidden>
+        <table>
+          <thead><tr><th>Mês</th><th>Aporte</th><th>Tesouro</th><th>IVVB11</th><th>BOVA11</th><th>Carteira depois</th><th><span class="visually-hidden">Ações</span></th></tr></thead>
+          <tbody id="hist-body"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <footer>Ferramenta educativa feita com o Claude. A calculadora faz uma conta de rebalanceamento a partir da meta 40/30/30 que você escolheu, e o boletim resume dados públicos com as fontes. Nada aqui é recomendação de investimento, e o Claude não é consultor registrado na CVM. Rentabilidade passada não garante retorno futuro.</footer>
+</div>
+<script>
+(function () {
+  var ALVO = { tesouro: 0.40, ivvb: 0.30, brasil: 0.30 };
+  var KEYS = ["tesouro", "ivvb", "brasil"];
+  var COR = { tesouro: "var(--c-tesouro)", ivvb: "var(--c-ivvb)", brasil: "var(--c-brasil)" };
+  var MIN_TESOURO = 35;
+  var SAVED_FIELDS = ["tesouro", "ivvb", "brasil", "aporte"];
+  var ALL_FIELDS = ["tesouro", "ivvb", "brasil", "aporte", "precoIvvb", "precoBova"];
+  var STORE_KEY = "aportes-valores-v1";
+  var HIST_KEY = "aportes-historico-v1";
+
+  var brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+  var dec = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  function pct(v) { return Math.round(v * 100) + "%"; }
+  function $(id) { return document.getElementById(id); }
+
+  function lsGet(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
+
+  function parseBR(s) {
+    s = String(s || "").replace(/R\$|\s/g, "");
+    if (!s) return 0;
+    if (s.indexOf(",") >= 0) s = s.replace(/\./g, "").replace(",", ".");
+    else if ((s.match(/\./g) || []).length > 1) s = s.replace(/\./g, "");
+    else if (/^\d{1,3}\.\d{3}$/.test(s)) s = s.replace(".", "");
+    var n = parseFloat(s);
+    return isFinite(n) && n > 0 ? n : 0;
+  }
+
+  // Rebalanceamento pelo aporte: o dinheiro vai para o que está mais abaixo da meta,
+  // comprando cotas inteiras dos ETFs uma a uma, sem vender nada.
+  function calcular(v) {
+    var atual = { tesouro: v.tesouro, ivvb: v.ivvb, brasil: v.brasil };
+    var total0 = atual.tesouro + atual.ivvb + atual.brasil;
+    var N = total0 + v.aporte;
+    var def = {}, D = 0;
+    KEYS.forEach(function (k) { def[k] = Math.max(0, ALVO[k] * N - atual[k]); D += def[k]; });
+    var ideal = {};
+    KEYS.forEach(function (k) { ideal[k] = D > 0 ? v.aporte * def[k] / D : v.aporte * ALVO[k]; });
+
+    var preco = { ivvb: v.precoIvvb, brasil: v.precoBova };
+    var compra = { tesouro: 0, ivvb: 0, brasil: 0 };
+    var cotas = { ivvb: null, brasil: null };
+    var budget = v.aporte - ideal.tesouro;
+
+    ["ivvb", "brasil"].forEach(function (k) {
+      if (preco[k] > 0) { cotas[k] = 0; }
+      else { compra[k] = ideal[k]; budget -= ideal[k]; }
+    });
+
+    for (var guard = 0; guard < 500; guard++) {
+      var best = null, bestGap = 0;
+      ["ivvb", "brasil"].forEach(function (k) {
+        if (preco[k] > 0 && preco[k] <= budget + 0.005) {
+          var gap = ALVO[k] * N - (atual[k] + compra[k]);
+          if (gap > bestGap) { bestGap = gap; best = k; }
+        }
+      });
+      if (!best) break;
+      cotas[best] += 1; compra[best] += preco[best]; budget -= preco[best];
+    }
+
+    var sobra = Math.max(0, budget);
+    var tes = ideal.tesouro;
+    if (tes > 0) { tes += sobra; sobra = 0; }
+    var tesAbaixoMinimo = false;
+    if (tes > 0 && tes < MIN_TESOURO) { sobra += tes; tes = 0; tesAbaixoMinimo = true; }
+    compra.tesouro = Math.floor(tes * 100) / 100;
+    sobra += tes - compra.tesouro;
+    if (sobra < 0.01) sobra = 0;
+
+    var depois = {};
+    KEYS.forEach(function (k) { depois[k] = atual[k] + compra[k]; });
+    return { atual: atual, total0: total0, N: N, ideal: ideal, compra: compra, cotas: cotas,
+             sobra: sobra, depois: depois, preco: preco, tesAbaixoMinimo: tesAbaixoMinimo };
+  }
+
+  var boletim = null;
+
+  function readValues() {
+    var pb = boletim && boletim.precos ? boletim.precos : {};
+    return {
+      tesouro: parseBR($("tesouro").value), ivvb: parseBR($("ivvb").value), brasil: parseBR($("brasil").value),
+      aporte: parseBR($("aporte").value),
+      precoIvvb: parseBR($("precoIvvb").value) || (Number(pb.ivvb) > 0 ? Number(pb.ivvb) : 0),
+      precoBova: parseBR($("precoBova").value) || (Number(pb.bova) > 0 ? Number(pb.bova) : 0)
+    };
+  }
+
+  function setRow(key, amount, how, skip) {
+    var row = $("row-" + key);
+    row.querySelector("[data-amount]").textContent = amount;
+    row.querySelector("[data-how]").textContent = how;
+    row.classList.toggle("skip", !!skip);
+  }
+
+  function fillBar(el, vals) {
+    var total = vals.tesouro + vals.ivvb + vals.brasil;
+    el.textContent = "";
+    if (total <= 0) return;
+    KEYS.forEach(function (k) {
+      var share = vals[k] / total;
+      if (share <= 0) return;
+      var seg = document.createElement("span");
+      seg.className = "seg";
+      seg.style.width = (share * 100) + "%";
+      seg.style.background = COR[k];
+      seg.textContent = share >= 0.1 ? pct(share) : "";
+      seg.title = pct(share);
+      el.appendChild(seg);
+    });
+  }
+
+  var last = null;
+
+  function render() {
+    var v = readValues();
+    var r = calcular(v);
+    last = { v: v, r: r };
+    var temAporte = v.aporte > 0;
+    var shareNow = function (k) { return r.total0 > 0 ? r.atual[k] / r.total0 : 0; };
+
+    if (!temAporte) {
+      setRow("tesouro", "—", "Digite quanto vai investir no passo 2.", true);
+    } else if (r.compra.tesouro > 0) {
+      setRow("tesouro", brl.format(r.compra.tesouro), "Investir → Tesouro Direto → Tesouro IPCA+ 2032 → digite esse valor.", false);
+    } else if (r.tesAbaixoMinimo) {
+      setRow("tesouro", brl.format(0), "O valor ficou abaixo do mínimo do Tesouro, então foi para a sobra.", true);
+    } else {
+      setRow("tesouro", brl.format(0), "Pule este mês: você tem " + pct(shareNow("tesouro")) + " aqui e a meta é 40%. Os aportes na bolsa equilibram.", true);
+    }
+
+    [["ivvb", "IVVB11"], ["brasil", "BOVA11"]].forEach(function (pair) {
+      var k = pair[0], tk = pair[1];
+      if (!temAporte) { setRow(k, "—", "Digite quanto vai investir no passo 2.", true); return; }
+      if (r.preco[k] > 0) {
+        var c = r.cotas[k];
+        if (c > 0) {
+          setRow(k, c + (c === 1 ? " cota" : " cotas"), "≈ " + brl.format(r.compra[k]) + " · busque " + tk + " (ou " + tk + "F) e compre " + c + (c === 1 ? " cota." : " cotas."), false);
+        } else if (r.ideal[k] < 0.01) {
+          setRow(k, "0 cotas", "Pule este mês: você tem " + pct(shareNow(k)) + " aqui e a meta é 30%.", true);
+        } else {
+          setRow(k, "0 cotas", "O dinheiro deste mês não paga 1 cota (" + brl.format(r.preco[k]) + ") depois das outras compras. Fica para o mês que vem.", true);
+        }
+      } else if (r.ideal[k] < 0.01) {
+        setRow(k, brl.format(0), "Pule este mês: você tem " + pct(shareNow(k)) + " aqui e a meta é 30%.", true);
+      } else {
+        setRow(k, brl.format(r.compra[k]), "em cotas de " + tk + ". Digite o preço da cota no passo 2 para ver quantas.", false);
+      }
+    });
+
+    var lo = $("leftover");
+    if (temAporte && r.sobra >= 0.01) {
+      lo.hidden = false;
+      lo.textContent = "";
+      var b = document.createElement("span"); b.className = "num"; b.textContent = brl.format(r.sobra);
+      lo.append("Sobra ", b, ": deixe no saldo. Ela entra no aporte do mês que vem.");
+    } else {
+      lo.hidden = true;
+    }
+
+    fillBar($("bar-hoje"), r.atual);
+    fillBar($("bar-depois"), r.depois);
+    fillBar($("bar-meta"), { tesouro: 40, ivvb: 30, brasil: 30 });
+    var totalDepois = r.depois.tesouro + r.depois.ivvb + r.depois.brasil;
+    $("limite-acoes").textContent = totalDepois > 0 ? brl.format(0.10 * totalDepois) : "10% do que você tiver";
+
+    updatePriceHint();
+    $("registrar").disabled = !temAporte;
+    updateAskLink();
+  }
+
+  function updatePriceHint() {
+    var pb = boletim && boletim.precos;
+    if (pb && (Number(pb.ivvb) > 0 || Number(pb.bova) > 0)) {
+      $("precoIvvb").placeholder = Number(pb.ivvb) > 0 ? dec.format(Number(pb.ivvb)) : "";
+      $("precoBova").placeholder = Number(pb.bova) > 0 ? dec.format(Number(pb.bova)) : "";
+      var typed = $("precoIvvb").value || $("precoBova").value;
+      $("preco-hint").textContent = typed
+        ? "Usando o preço que você digitou."
+        : "Usando o preço do boletim" + (pb.data ? " de " + pb.data : "") + ". Se o app mostrar outro, digite aqui.";
+    }
+  }
+
+  // Valores: ficam só neste aparelho. Preços nunca são guardados, porque mudam todo dia.
+  var saved = lsGet(STORE_KEY);
+  ALL_FIELDS.forEach(function (f) {
+    var el = $(f);
+    el.value = SAVED_FIELDS.indexOf(f) >= 0 && saved && typeof saved[f] === "string" ? saved[f] : "";
+    el.addEventListener("input", function () {
+      render();
+      if (SAVED_FIELDS.indexOf(f) < 0) return;
+      var o = {}; SAVED_FIELDS.forEach(function (g) { o[g] = $(g).value; });
+      lsSet(STORE_KEY, o);
+    });
+  });
+
+  var now = new Date();
+  var mesKey = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0");
+  var mesNome = now.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+  $("mesLabel").textContent = mesNome;
+
+  // ---------- Boletim (boletim.json, atualizado pelo Claude todo dia 1º) ----------
+  function fmtData(iso) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ""));
+    return m ? m[3] + "/" + m[2] + "/" + m[1] : "";
+  }
+  function safeUrl(u) { return /^https:\/\//i.test(String(u || "")) ? String(u) : null; }
+
+  function renderBoletim(b) {
+    boletim = b;
+    if (!b) {
+      $("bol-empty").textContent = "Não deu para carregar o boletim. Confira a internet e abra o app de novo.";
+      render();
+      return;
+    }
+    $("bol-empty").hidden = true; $("bol-body").hidden = false;
+    var mesRef = String(b.mesReferencia || "");
+    $("h-bol").textContent = mesRef ? "Boletim de " + mesRef : "Boletim do mês";
+    var stamp = $("bol-stamp");
+    var parts = [];
+    if (b.atualizadoEm) parts.push("Atualizado em " + fmtData(b.atualizadoEm));
+    if (b.proximaAtualizacao) parts.push("próximo em " + fmtData(b.proximaAtualizacao));
+    var age = b.atualizadoEm ? (Date.now() - new Date(b.atualizadoEm + "T12:00:00").getTime()) / 864e5 : 0;
+    if (age > 40) parts.push("desatualizado");
+    stamp.textContent = parts.join(" · ");
+    stamp.classList.toggle("stale", age > 40);
+
+    $("bol-resumo").textContent = String(b.resumo || "");
+    $("bol-plano").textContent = String(b.noPlano || "Nada muda: siga a calculadora.");
+
+    var grid = $("bol-indic"); grid.textContent = "";
+    (Array.isArray(b.indicadores) ? b.indicadores : []).slice(0, 8).forEach(function (it) {
+      var d = document.createElement("div");
+      var k = document.createElement("span"); k.className = "k"; k.textContent = String(it.nome || "");
+      var v = document.createElement("span"); v.className = "v"; v.textContent = String(it.valor || "—");
+      d.append(k, v);
+      if (it.nota) { var n = document.createElement("span"); n.className = "n"; n.textContent = String(it.nota); d.append(n); }
+      grid.appendChild(d);
+    });
+
+    var ul = $("bol-news"); ul.textContent = "";
+    (Array.isArray(b.noticias) ? b.noticias : []).slice(0, 6).forEach(function (n) {
+      var li = document.createElement("li");
+      var t = document.createElement("strong"); t.textContent = String(n.titulo || "");
+      var p = document.createElement("p"); p.textContent = String(n.resumo || "");
+      li.append(t, p);
+      var url = safeUrl(n.url);
+      if (n.fonte || url) {
+        var s = document.createElement("span"); s.className = "src";
+        if (url) {
+          var a = document.createElement("a"); a.href = url; a.target = "_blank"; a.rel = "noopener";
+          a.textContent = String(n.fonte || "Fonte"); s.append("Fonte: ", a);
+        } else { s.textContent = "Fonte: " + String(n.fonte); }
+        li.append(s);
+      }
+      ul.appendChild(li);
+    });
+    render();
+  }
+
+  fetch("boletim.json", { cache: "no-store" })
+    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(renderBoletim, function () { renderBoletim(null); });
+
+  // ---------- Histórico (guardado neste aparelho) ----------
+  function loadHist() { var h = lsGet(HIST_KEY); return Array.isArray(h) ? h : []; }
+
+  function mesCurto(key) {
+    var p = String(key).split("-");
+    var d = new Date(Number(p[0]), Number(p[1]) - 1, 1);
+    var s = d.toLocaleDateString("pt-BR", { month: "short", year: "numeric" }).replace(".", "");
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+
+  function renderHistory() {
+    var rows = loadHist().slice().sort(function (a, b) { return String(b.registradoEm).localeCompare(String(a.registradoEm)); });
+    var body = $("hist-body");
+    body.textContent = "";
+    if (!rows.length) { $("hist-empty").hidden = false; $("hist-wrap").hidden = true; return; }
+    $("hist-empty").hidden = true; $("hist-wrap").hidden = false;
+    rows.forEach(function (d) {
+      var c = d.compra || {};
+      var tr = document.createElement("tr");
+      [
+        mesCurto(d.mes),
+        brl.format(d.aporte || 0),
+        brl.format(c.tesouro || 0),
+        (c.ivvbCotas != null ? c.ivvbCotas + " · " : "") + brl.format(c.ivvb || 0),
+        (c.brasilCotas != null ? c.brasilCotas + " · " : "") + brl.format(c.brasil || 0),
+        brl.format(d.totalDepois || 0)
+      ].forEach(function (t) { var td = document.createElement("td"); td.textContent = t; tr.appendChild(td); });
+      var tdDel = document.createElement("td");
+      var del = document.createElement("button");
+      del.type = "button"; del.className = "del"; del.textContent = "Apagar";
+      del.setAttribute("aria-label", "Apagar o registro de " + mesCurto(d.mes));
+      del.addEventListener("click", function () {
+        if (!window.confirm("Apagar o registro de " + mesCurto(d.mes) + " (" + brl.format(d.aporte || 0) + ")?")) return;
+        lsSet(HIST_KEY, loadHist().filter(function (x) { return x.id !== d.id; }));
+        renderHistory();
+      });
+      tdDel.appendChild(del); tr.appendChild(tdDel);
+      body.appendChild(tr);
+    });
+  }
+
+  $("registrar").addEventListener("click", function () {
+    if (!last || !(last.v.aporte > 0)) return;
+    var v = last.v, r = last.r;
+    var totalDepois = r.depois.tesouro + r.depois.ivvb + r.depois.brasil;
+    var hist = loadHist();
+    hist.push({
+      id: mesKey + "-" + Date.now(),
+      mes: mesKey,
+      registradoEm: new Date().toISOString(),
+      aporte: v.aporte,
+      antes: { tesouro: v.tesouro, ivvb: v.ivvb, brasil: v.brasil },
+      compra: {
+        tesouro: r.compra.tesouro,
+        ivvb: Math.round(r.compra.ivvb * 100) / 100, ivvbCotas: r.cotas.ivvb,
+        brasil: Math.round(r.compra.brasil * 100) / 100, brasilCotas: r.cotas.brasil
+      },
+      sobra: Math.round(r.sobra * 100) / 100,
+      totalDepois: Math.round(totalDepois * 100) / 100
+    });
+    $("status").textContent = lsSet(HIST_KEY, hist)
+      ? "Aporte registrado neste celular. Se investir de novo neste mês, atualize os valores do passo 1 e registre outra vez."
+      : "Não deu para salvar neste navegador. Confira se o modo privado está desligado.";
+    renderHistory();
+  });
+
+  // ---------- Perguntar ao Claude (abre o Claude com a pergunta e o contexto) ----------
+  function updateAskLink() {
+    var q = $("pergunta").value.trim();
+    var a = $("perguntar");
+    if (!q) { a.setAttribute("aria-disabled", "true"); a.removeAttribute("href"); return; }
+    a.removeAttribute("aria-disabled");
+    var v = last ? last.v : null, r = last ? last.r : null;
+    var linhas = [
+      "Sou investidor iniciante (22 anos, foco em longo prazo, reserva de emergência separada). Meu plano: aportar todo mês sem vender, com meta de 40% Tesouro IPCA+ 2032, 30% IVVB11 e 30% BOVA11. Não quero recomendação de ação específica, quero entender.",
+    ];
+    if (v && (v.tesouro || v.ivvb || v.brasil)) {
+      linhas.push("Carteira hoje: Tesouro " + brl.format(v.tesouro) + ", IVVB11 " + brl.format(v.ivvb) + ", resto da bolsa " + brl.format(v.brasil) + ". Aporte deste mês: " + brl.format(v.aporte) + ".");
+    }
+    if (r && v && v.aporte > 0) {
+      linhas.push("Minha calculadora de rebalanceamento sugeriu: Tesouro " + brl.format(r.compra.tesouro) + ", IVVB11 " + (r.cotas.ivvb != null ? r.cotas.ivvb + " cota(s)" : brl.format(r.compra.ivvb)) + ", BOVA11 " + (r.cotas.brasil != null ? r.cotas.brasil + " cota(s)" : brl.format(r.compra.brasil)) + ", sobra " + brl.format(r.sobra) + ".");
+    }
+    if (boletim && boletim.resumo) linhas.push("Resumo do mês (" + (boletim.mesReferencia || "") + "): " + boletim.resumo);
+    linhas.push("Minha pergunta: " + q);
+    a.href = "https://claude.ai/new?q=" + encodeURIComponent(linhas.join("\n\n"));
+  }
+  $("pergunta").addEventListener("input", updateAskLink);
+  Array.prototype.forEach.call(document.querySelectorAll("#chips .chip"), function (c) {
+    c.addEventListener("click", function () { $("pergunta").value = c.textContent; updateAskLink(); $("pergunta").focus(); });
+  });
+
+  render();
+  renderHistory();
+
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); });
+  }
+})();
+</script>
+</body>
+</html>
