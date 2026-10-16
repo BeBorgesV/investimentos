@@ -1,5 +1,5 @@
 // Guarda o app no celular para abrir sem internet. Ao publicar uma versão nova, troque o número abaixo.
-const VERSION = "aportes-v5";
+const VERSION = "aportes-v6";
 const SHELL = ["./", "index.html", "manifest.webmanifest", "icon-192.png", "icon-512.png", "icon-maskable-512.png", "apple-touch-icon.png"];
 
 self.addEventListener("install", (e) => {
@@ -19,11 +19,11 @@ self.addEventListener("fetch", (e) => {
   if (req.method !== "GET") return;
   const url = new URL(req.url);
   const isPage = req.mode === "navigate";
-  const isBoletim = url.pathname.endsWith("/boletim.json");
+  const isBoletim = url.pathname.endsWith("/boletim.json") || url.pathname.endsWith("/precos.json");
   const isFont = url.hostname === "fonts.googleapis.com" || url.hostname === "fonts.gstatic.com";
   if (isPage || isBoletim) {
     // Página e boletim: tenta a versão nova primeiro; sem internet, usa a guardada.
-    const key = isPage ? "index.html" : "boletim.json";
+    const key = isPage ? "index.html" : url.pathname.endsWith("/precos.json") ? "precos.json" : "boletim.json";
     e.respondWith(
       fetch(req).then((res) => {
         if (res.ok) { const copy = res.clone(); caches.open(VERSION).then((c) => c.put(key, copy)); }

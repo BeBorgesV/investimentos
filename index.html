@@ -216,7 +216,7 @@ footer { font-size: 12.5px; color: var(--muted); }
   padding-bottom: env(safe-area-inset-bottom, 0px);
   padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px);
 }
-.tabbar nav { max-width: 720px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); height: var(--nav-h); }
+.tabbar nav { max-width: 720px; margin: 0 auto; display: grid; grid-template-columns: repeat(5, 1fr); height: var(--nav-h); }
 .tab {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
   text-decoration: none; color: var(--muted); font-size: 11.5px; font-weight: 600; letter-spacing: 0.01em;
@@ -495,6 +495,47 @@ footer { font-size: 12.5px; color: var(--muted); }
     </div>
   </section>
 
+  <!-- ================= AÇÕES ================= -->
+  <section class="view guide" id="view-acoes" aria-labelledby="h-acoes" hidden>
+    <div class="view-head">
+      <p class="eyebrow">Para estudar, não para seguir</p>
+      <h1 id="h-acoes">Ações</h1>
+    </div>
+
+    <div class="card">
+      <h2>Estudar uma ação</h2>
+      <p class="hint">Digite o código de uma ação da B3 que você viu e ficou curioso (todas estão disponíveis no Nubank). O Claude abre com uma análise pronta para pedir: o que a empresa faz, lucro, dívida, riscos e o seu checklist.</p>
+      <div class="field">
+        <label for="t-ticker">Código da ação</label>
+        <div class="input"><input id="t-ticker" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Ex.: WEGE3, ITUB4, PETR4" maxlength="7"></div>
+      </div>
+      <a class="btn primary block" id="t-estudar" target="_blank" rel="noopener" aria-disabled="true">Estudar no Claude</a>
+    </div>
+
+    <div class="card">
+      <h2>Seu limite</h2>
+      <p class="limit">Ações escolhidas por você entram na fatia Brasil, no lugar de parte do BOVA11, e somadas nunca passam de <strong>10% da carteira</strong>. Hoje isso dá <strong class="num" id="limite-acoes">—</strong>.</p>
+      <p class="hint">Para comprar, use parte do valor que a aba Comprar mandaria para o BOVA11, nunca do Tesouro ou do IVVB11.</p>
+    </div>
+
+    <div class="card">
+      <h2>Checklist antes de comprar</h2>
+      <ul>
+        <li>Você sabe explicar em duas frases como a empresa ganha dinheiro?</li>
+        <li>O lucro cresceu nos últimos 5 anos, e não só no último?</li>
+        <li>A dívida é menor que uns 3 anos de lucro operacional?</li>
+        <li>Você manteria a ação se ela caísse 30% amanhã?</li>
+        <li>Você está comprando por estudo, não por dica de rede social ou manchete?</li>
+      </ul>
+      <p class="hint">Se alguma resposta for "não", o BOVA11 faz esse papel melhor.</p>
+    </div>
+
+    <div class="card">
+      <h2>Por que não tem lista de "ações que vão subir"</h2>
+      <p class="hint">Ninguém sabe isso de antemão, nem os gestores profissionais, e a maioria deles não consegue bater o Ibovespa por muito tempo. Quando uma ação aparece como "a que está crescendo", o preço já subiu. Por isso o plano usa o BOVA11, que já tem as maiores empresas do Brasil, e deixa só 10% para você estudar e escolher.</p>
+    </div>
+  </section>
+
   <!-- ================= GUIA ================= -->
   <section class="view guide" id="view-guia" aria-labelledby="h-guia" hidden>
     <div class="view-head">
@@ -538,19 +579,6 @@ footer { font-size: 12.5px; color: var(--muted); }
     </div>
 
     <div class="card">
-      <h2>Se quiser escolher ações</h2>
-      <p class="limit">Ações escolhidas por você entram na fatia Brasil, no lugar de parte do BOVA11, e somadas nunca passam de <strong>10% da carteira</strong>. Hoje isso dá <strong class="num" id="limite-acoes">—</strong>.</p>
-      <ul>
-        <li>Você sabe explicar em duas frases como a empresa ganha dinheiro?</li>
-        <li>O lucro cresceu nos últimos 5 anos, e não só no último?</li>
-        <li>A dívida é menor que uns 3 anos de lucro operacional?</li>
-        <li>Você manteria a ação se ela caísse 30% amanhã?</li>
-        <li>Você está comprando por estudo, não por dica de rede social ou manchete?</li>
-      </ul>
-      <p class="hint">Se alguma resposta for "não", o BOVA11 faz esse papel melhor.</p>
-    </div>
-
-    <div class="card">
       <h2>Seus dados</h2>
       <p class="hint">A carteira, as movimentações e os prints ficam só neste celular: o print é lido no próprio aparelho e não é enviado para lugar nenhum. Se apagar os dados do Safari ou trocar de celular, configure de novo.</p>
       <button class="btn" type="button" id="btn-reset">Apagar carteira e começar de novo</button>
@@ -564,6 +592,7 @@ footer { font-size: 12.5px; color: var(--muted); }
   <nav aria-label="Seções">
     <a class="tab" href="#carteira" data-tab="carteira"><span class="tab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="14" rx="2.5"/><path d="M3 10h18"/><path d="M16 15h2"/><path d="M6 6V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1"/></svg></span>Carteira</a>
     <a class="tab" href="#comprar" data-tab="comprar"><span class="tab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V12"/><path d="M12 20V8"/><path d="M19 20V4"/><path d="M3 20h18"/></svg><span class="badge" id="badge-comprar" hidden></span></span>Comprar</a>
+    <a class="tab" href="#acoes" data-tab="acoes"><span class="tab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 20 20"/><path d="M7.5 12.5l2-2 1.5 1.5 2.5-3"/></svg></span>Ações</a>
     <a class="tab" href="#noticias" data-tab="noticias"><span class="tab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h13v14a1 1 0 0 0 1 1H6a2 2 0 0 1-2-2V5z"/><path d="M17 9h3v9a2 2 0 0 1-2 2"/><path d="M7.5 9h6"/><path d="M7.5 12.5h6"/><path d="M7.5 16h4"/></svg></span>Notícias</a>
     <a class="tab" href="#guia" data-tab="guia"><span class="tab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8 1c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17.2h.01"/></svg></span>Guia</a>
   </nav>
@@ -652,11 +681,19 @@ footer { font-size: 12.5px; color: var(--muted); }
     var v = p ? Number(k === "ivvb" ? p.ivvb : p.bova) : 0;
     return v > 0 ? { valor: v, data: String(boletim.atualizadoEm || ""), fonte: "boletim" } : null;
   }
+  var precosDiarios = null; // precos.json, atualizado pelo Claude todo dia útil
+  function precoDiario(k) {
+    var p = precosDiarios;
+    var v = p ? Number(p[k]) : 0;
+    return v > 0 ? { valor: v, data: String(p.atualizadoEm || ""), fonte: "diario" } : null;
+  }
   function precoAtual(k) {
     var mine = S && S.precos && S.precos[k] && S.precos[k].valor > 0 ? S.precos[k] : null;
-    var bol = precoBoletim(k);
-    if (mine && bol) return String(bol.data) > String(mine.data) ? bol : mine;
-    return mine || bol;
+    var best = mine;
+    [precoDiario(k), precoBoletim(k)].forEach(function (c) {
+      if (c && (!best || String(c.data) > String(best.data))) best = c;
+    });
+    return best;
   }
 
   function valores() {
@@ -1412,6 +1449,29 @@ footer { font-size: 12.5px; color: var(--muted); }
     a.href = "https://claude.ai/new?q=" + encodeURIComponent(linhas.join("\n\n"));
   }
   $("pergunta").addEventListener("input", updateAskLink);
+
+  function updateEstudar() {
+    var t = $("t-ticker").value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 7);
+    if ($("t-ticker").value !== t) $("t-ticker").value = t;
+    var a = $("t-estudar");
+    if (!/^[A-Z]{4}\d{1,2}$/.test(t)) { a.setAttribute("aria-disabled", "true"); a.removeAttribute("href"); a.textContent = "Estudar no Claude"; return; }
+    a.removeAttribute("aria-disabled");
+    a.textContent = "Estudar " + t + " no Claude";
+    var limite = S ? 0.10 * (valores().investido + S.saldo) : 0;
+    var txt = [
+      "Quero estudar a ação " + t + ", negociada na B3 (compro pelo Nubank). Sou investidor iniciante, 22 anos, foco em longo prazo.",
+      "Pesquise dados atuais e me explique de forma simples:",
+      "1. O que a empresa faz e como ganha dinheiro.",
+      "2. Como evoluíram receita e lucro nos últimos 5 anos.",
+      "3. Quanto ela deve em relação ao lucro operacional.",
+      "4. Histórico de dividendos.",
+      "5. Os principais riscos do negócio.",
+      "Depois responda ao meu checklist: dá para explicar o negócio em duas frases? O lucro cresceu de forma consistente em 5 anos? A dívida é menor que uns 3 anos de lucro operacional? Que quedas fortes a ação já teve e por quê?",
+      "Não me diga se devo comprar; quero entender para decidir sozinho. No meu plano, ações escolhidas por mim ficam dentro da fatia Brasil e somam no máximo 10% da carteira" + (limite > 0 ? " (hoje " + brl.format(limite) + ")." : ".")
+    ];
+    a.href = "https://claude.ai/new?q=" + encodeURIComponent(txt.join("\n"));
+  }
+  $("t-ticker").addEventListener("input", updateEstudar);
   Array.prototype.forEach.call(document.querySelectorAll("#chips .chip"), function (c) {
     c.addEventListener("click", function () { $("pergunta").value = c.textContent; updateAskLink(); $("pergunta").focus(); });
   });
@@ -1426,7 +1486,7 @@ footer { font-size: 12.5px; color: var(--muted); }
   });
 
   // ---------------- Abas ----------------
-  var TABS = ["carteira", "comprar", "noticias", "guia"];
+  var TABS = ["carteira", "comprar", "acoes", "noticias", "guia"];
   function showTab() {
     var t = (location.hash || "").replace("#", "");
     if (TABS.indexOf(t) < 0) t = "carteira";
@@ -1456,6 +1516,10 @@ footer { font-size: 12.5px; color: var(--muted); }
     var n = aplicarRecorrente();
     if (n) { renderAll(); toast("Entrou o aporte do dia " + S.recorrente.dia + ": +" + brl.format(S.recorrente.valor * n)); }
   });
+
+  fetch("precos.json", { cache: "no-store" })
+    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(function (p) { precosDiarios = p; renderAll(); }, function () {});
 
   fetch("boletim.json", { cache: "no-store" })
     .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
