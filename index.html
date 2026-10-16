@@ -123,6 +123,7 @@ textarea {
 }
 .formmsg { font-size: 13.5px; }
 .formmsg.bad { color: var(--bad); }
+.formmsg.info { padding: 10px 12px; border-radius: 8px; background: var(--soft); }
 
 /* Carteira */
 .hero { display: flex; flex-direction: column; gap: 2px; }
@@ -247,7 +248,9 @@ footer { font-size: 12.5px; color: var(--muted); }
     <!-- Primeiro uso -->
     <div class="card" id="setup" hidden>
       <h2>Configure sua carteira</h2>
-      <p class="hint">Copie do app do Nubank (Investimentos → Minha carteira). Depois disso o app atualiza sozinho a cada compra que você confirmar.</p>
+      <p class="hint">Mande um print da tela Minha carteira do Nubank, ou copie os números à mão. Depois disso o app atualiza sozinho a cada compra que você confirmar.</p>
+      <button class="btn primary block" type="button" id="s-foto">Preencher com um print</button>
+      <p class="formmsg" id="s-foto-status" hidden></p>
       <div class="field">
         <label for="s-tesouro">Tesouro direto <span class="ticker">IPCA+ 2032</span></label>
         <div class="input"><span>R$</span><input id="s-tesouro" inputmode="decimal" autocomplete="off" placeholder="0,00"></div>
@@ -300,6 +303,8 @@ footer { font-size: 12.5px; color: var(--muted); }
       <div class="card">
         <div class="row-between"><h2>O que você tem</h2><span class="hint" id="c-precos-data"></span></div>
         <div class="holdings" id="c-holdings"></div>
+        <button class="btn primary block" type="button" id="btn-foto">Atualizar com print do Nubank</button>
+        <p class="formmsg" id="foto-status" hidden></p>
         <div class="btn-row">
           <button class="btn" type="button" id="btn-deposito">Entrou dinheiro</button>
           <button class="btn" type="button" id="btn-ajustar">Atualizar valores</button>
@@ -473,7 +478,7 @@ footer { font-size: 12.5px; color: var(--muted); }
     <div class="card">
       <h2>Todo mês</h2>
       <ol>
-        <li>Quando cair o dinheiro, abra <strong>Carteira</strong> e toque em <strong>Entrou dinheiro</strong>.</li>
+        <li>Quando cair o dinheiro, abra <strong>Carteira</strong> e toque em <strong>Entrou dinheiro</strong>. Ou mande um print da tela Minha carteira do Nubank em <strong>Atualizar com print</strong>.</li>
         <li>Vá em <strong>Comprar</strong> e veja o que comprar.</li>
         <li>No app do Nubank: Tesouro em Investir → Tesouro Direto → <strong>Tesouro IPCA+ 2032</strong>. ETFs: busque <code>IVVB11</code> ou <code>BOVA11</code>; se pedir lote de 10, use <code>IVVB11F</code> ou <code>BOVA11F</code>.</li>
         <li>Volte aqui, toque em <strong>Fiz essas compras</strong> e confirme. Pronto: carteira e saldo atualizados.</li>
@@ -506,7 +511,7 @@ footer { font-size: 12.5px; color: var(--muted); }
 
     <div class="card">
       <h2>Seus dados</h2>
-      <p class="hint">A carteira e as movimentações ficam guardadas só neste celular, neste navegador. Nada é enviado para lugar nenhum. Se apagar os dados do Safari ou trocar de celular, configure de novo.</p>
+      <p class="hint">A carteira, as movimentações e os prints ficam só neste celular: o print é lido no próprio aparelho e não é enviado para lugar nenhum. Se apagar os dados do Safari ou trocar de celular, configure de novo.</p>
       <button class="btn" type="button" id="btn-reset">Apagar carteira e começar de novo</button>
     </div>
 
@@ -523,6 +528,7 @@ footer { font-size: 12.5px; color: var(--muted); }
   </nav>
 </div>
 <div class="toast" id="toast" role="status" hidden></div>
+<input type="file" id="foto-input" accept="image/*" multiple hidden>
 
 <script>
 (function () {
@@ -789,6 +795,7 @@ footer { font-size: 12.5px; color: var(--muted); }
 
   // Atualizar valores
   $("btn-ajustar").addEventListener("click", function () {
+    ajustePorFoto = false; $("foto-status").hidden = true;
     $("form-deposito").hidden = true; $("form-ajustar").hidden = false;
     $("a-tesouro").value = money(S.tesouro); $("a-ivvb").value = String(S.ivvbCotas); $("a-bova").value = String(S.bovaCotas);
     $("a-outras").value = money(S.outras); $("a-saldo").value = money(S.saldo);
@@ -799,15 +806,219 @@ footer { font-size: 12.5px; color: var(--muted); }
     var ef = { tesouro: r2(n.tesouro - S.tesouro), ivvbCotas: n.ivvbCotas - S.ivvbCotas, bovaCotas: n.bovaCotas - S.bovaCotas,
                outras: r2(n.outras - S.outras), saldo: r2(n.saldo - S.saldo) };
     var mudou = Object.keys(ef).some(function (k) { return Math.abs(ef[k]) > 0.004; });
-    $("form-ajustar").hidden = true;
-    if (!mudou) return;
+    $("form-ajustar").hidden = true; $("foto-status").hidden = true;
+    if (!mudou) { ajustePorFoto = false; return; }
     if (Math.abs(ef.tesouro) > 0.004) S.tesouroData = today();
-    registrar({ tipo: "ajuste", titulo: "Valores atualizados", detalhe: "copiados do app do banco", efeito: ef });
+    registrar({ tipo: "ajuste", titulo: ajustePorFoto ? "Valores atualizados pelo print" : "Valores atualizados", detalhe: "conferidos com o app do banco", efeito: ef });
+    ajustePorFoto = false;
     renderAll();
     toast("Carteira atualizada");
   });
   Array.prototype.forEach.call(document.querySelectorAll("[data-close]"), function (b) {
     b.addEventListener("click", function () { $(b.getAttribute("data-close")).hidden = true; });
+  });
+
+
+  // ---------------- Ler print do Nubank (no próprio celular) ----------------
+  // Lê o texto de um print do app do Nubank e acha os valores da carteira.
+  function lerPrint(texto) {
+    function norm(s) { return s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase(); }
+    var linhas = String(texto || "").split(/\n+/).map(function (l) { return l.trim(); }).filter(Boolean);
+    var N = linhas.map(norm);
+    // Valores em reais. O Nubank sempre mostra centavos, então "R$80519" (vírgula perdida na leitura) vira 805,19.
+    var RE_RS = /R\s?[$S§5s]\s?(\d[\d.]*)(?:,(\d{2}))?/g;
+    var RE_MONEY = /(\d{1,3}(?:\.\d{3})*,\d{2})(?!\s*%)/g;
+    function valoresEm(i) {
+      var out = [], m, s = linhas[i].replace(/[Oo](?=[\d.]*,\d{2})/g, "0");
+      RE_RS.lastIndex = 0;
+      while ((m = RE_RS.exec(s))) {
+        var inteiro = m[1].replace(/\./g, "");
+        if (m[2]) out.push(parseFloat(inteiro + "." + m[2]));
+        else if (inteiro.length >= 3) out.push(parseFloat(inteiro.slice(0, -2) + "." + inteiro.slice(-2)));
+      }
+      if (out.length) return out;
+      RE_MONEY.lastIndex = 0;
+      while ((m = RE_MONEY.exec(s))) out.push(parseFloat(m[1].replace(/\./g, "").replace(",", ".")));
+      return out;
+    }
+    function primeiroValorDepois(i, alcance) {
+      for (var j = i; j < Math.min(linhas.length, i + 1 + alcance); j++) {
+        var v = valoresEm(j);
+        if (j === i) {
+          // na própria linha do rótulo, só vale o que vem depois do rótulo
+          var depois = linhas[i].slice(linhas[i].search(/\d/));
+          if (!/\d/.test(depois)) continue;
+        }
+        if (v.length) return v[0];
+      }
+      return null;
+    }
+    var achados = {};
+    var rotulos = [
+      ["tesouro", /tesouro\s*dire/],
+      ["bolsa", /bolsa\s*de\s*valor/],
+      ["fundos", /fundos?\s*de\s*invest/],
+      ["saldo", /saldo\s*dispon/],
+      ["totalLiquido", /total\s*liquid/]
+    ];
+    rotulos.forEach(function (r) {
+      for (var i = 0; i < N.length; i++) {
+        if (r[1].test(N[i])) { var v = primeiroValorDepois(i, 3); if (v != null) { achados[r[0]] = v; break; } }
+      }
+    });
+    // ETFs (tela da Bolsa): ticker, quantidade e valor nas linhas próximas
+    [["ivvb", /ivv\s*b\s*1\s*1/], ["bova", /bova\s*1\s*1/]].forEach(function (t) {
+      for (var i = 0; i < N.length; i++) {
+        if (!t[1].test(N[i].replace(/[|l]/g, "1").replace(/o(?=11)/, "o"))) continue;
+        var bloco = N.slice(i, i + 4).join(" ");
+        var q = /(\d+)\s*cotas?\b/.exec(bloco) || /(?:qtd|quantidade)\.?\s*:?\s*(\d+)/.exec(bloco) || /(\d+)\s*(?:un|unid)\b/.exec(bloco);
+        var v = primeiroValorDepois(i, 3);
+        achados[t[0]] = { cotas: q ? parseInt(q[1], 10) : null, valor: v };
+        break;
+      }
+    });
+    return achados;
+  }
+
+
+  var TESS_URL = "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";
+  var LANG_PATH = "https://cdn.jsdelivr.net/npm/@tesseract.js-data/por@1.0.0/4.0.0_best_int";
+  var tessPromise = null;
+  function carregarTesseract() {
+    if (window.Tesseract) return Promise.resolve(window.Tesseract);
+    if (tessPromise) return tessPromise;
+    tessPromise = new Promise(function (ok, err) {
+      var sc = document.createElement("script"); sc.src = TESS_URL; sc.async = true;
+      sc.onload = function () { window.Tesseract ? ok(window.Tesseract) : err(new Error("sem Tesseract")); };
+      sc.onerror = function () { tessPromise = null; err(new Error("falha ao baixar")); };
+      document.head.appendChild(sc);
+    });
+    return tessPromise;
+  }
+
+  // Prints do Nubank costumam ser escuros: deixa em tons de cinza e inverte para letra preta no fundo branco.
+  function prepararImagem(file) {
+    return new Promise(function (ok, err) {
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function () {
+        var w = img.naturalWidth, h = img.naturalHeight;
+        var escala = w < 900 ? 2 : 1;
+        var c = document.createElement("canvas"); c.width = w * escala; c.height = h * escala;
+        var ctx = c.getContext("2d"); ctx.drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        var d = ctx.getImageData(0, 0, c.width, c.height), px = d.data, soma = 0;
+        for (var i = 0; i < px.length; i += 4) { var g = 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2]; px[i] = px[i + 1] = px[i + 2] = g; soma += g; }
+        if (soma / (px.length / 4) < 128) for (var j = 0; j < px.length; j += 4) { px[j] = px[j + 1] = px[j + 2] = 255 - px[j]; }
+        ctx.putImageData(d, 0, 0);
+        ok(c);
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); err(new Error("imagem inválida")); };
+      img.src = url;
+    });
+  }
+
+  function lerPrints(files, status) {
+    var lista = Array.prototype.slice.call(files, 0, 4);
+    var achados = {};
+    var worker = null;
+    function msg(t) { status.textContent = t; status.className = "formmsg info"; status.hidden = false; }
+    msg("Preparando a leitura… na primeira vez demora um pouco porque baixa o leitor de texto.");
+    return carregarTesseract().then(function (T) {
+      return T.createWorker("por", 1, {
+        langPath: LANG_PATH, gzip: true,
+        workerPath: "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/worker.min.js",
+        corePath: "https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1",
+        logger: function (m) {
+          if (m.status === "recognizing text") msg("Lendo o print… " + Math.round(m.progress * 100) + "%");
+          else if (/loading/.test(m.status)) msg("Baixando o leitor de texto… " + Math.round((m.progress || 0) * 100) + "%");
+        }
+      });
+    }).then(function (w) {
+      worker = w;
+      return lista.reduce(function (p, f) {
+        return p.then(function () { return prepararImagem(f); })
+          .then(function (canvas) { return worker.recognize(canvas); })
+          .then(function (res) {
+            var a = lerPrint(res.data.text);
+            Object.keys(a).forEach(function (k) { if (achados[k] == null) achados[k] = a[k]; });
+          });
+      }, Promise.resolve());
+    }).then(function () {
+      if (worker) worker.terminate();
+      return achados;
+    }, function (e) {
+      if (worker) worker.terminate();
+      throw e;
+    });
+  }
+
+  // Junta o que foi lido com o que a carteira já sabe.
+  function montarValores(a, atual) {
+    var n = { tesouro: atual.tesouro, ivvbCotas: atual.ivvbCotas, bovaCotas: atual.bovaCotas, outras: atual.outras, saldo: atual.saldo };
+    var pi = precoAtual("ivvb"), pb = precoAtual("bova");
+    var lidos = [], avisos = [];
+    if (a.tesouro != null) { n.tesouro = a.tesouro; lidos.push("Tesouro " + brl.format(a.tesouro)); }
+    if (a.saldo != null) { n.saldo = a.saldo; lidos.push("saldo " + brl.format(a.saldo)); }
+    function cotasDe(x, preco) {
+      if (!x) return null;
+      if (x.cotas != null) return x.cotas;
+      if (x.valor != null && preco) return Math.round(x.valor / preco.valor);
+      return null;
+    }
+    var ci = cotasDe(a.ivvb, pi), cb = cotasDe(a.bova, pb);
+    if (ci != null) { n.ivvbCotas = ci; lidos.push(ci + " IVVB11"); }
+    if (cb != null) { n.bovaCotas = cb; lidos.push(cb + " BOVA11"); }
+    if (a.bolsa != null) {
+      var vi = a.ivvb && a.ivvb.valor != null ? a.ivvb.valor : n.ivvbCotas * (pi ? pi.valor : 0);
+      var vb = a.bova && a.bova.valor != null ? a.bova.valor : n.bovaCotas * (pb ? pb.valor : 0);
+      n.outras = Math.max(0, r2(a.bolsa - vi - vb));
+      lidos.push("bolsa " + brl.format(a.bolsa));
+      if (!a.ivvb && !a.bova) avisos.push("Para separar IVVB11, BOVA11 e outras ações com precisão, mande também um print da tela Bolsa de valores. Por enquanto mantive suas cotas e o resto da bolsa ficou como outras ações.");
+    }
+    if (a.fundos != null && a.fundos > 0) avisos.push("O print mostra " + brl.format(a.fundos) + " em fundos. Fundos ficam fora do plano; quando resgatar, o dinheiro aparece no saldo.");
+    return { n: n, lidos: lidos, avisos: avisos };
+  }
+
+  var fotoDestino = "ajuste";
+  var ajustePorFoto = false;
+  function escolherFoto(destino) { fotoDestino = destino; $("foto-input").value = ""; $("foto-input").click(); }
+  $("btn-foto").addEventListener("click", function () { escolherFoto("ajuste"); });
+  $("s-foto").addEventListener("click", function () { escolherFoto("setup"); });
+  $("foto-input").addEventListener("change", function () {
+    var files = $("foto-input").files;
+    if (!files || !files.length) return;
+    var status = $(fotoDestino === "setup" ? "s-foto-status" : "foto-status");
+    var botao = $(fotoDestino === "setup" ? "s-foto" : "btn-foto");
+    botao.disabled = true;
+    lerPrints(files, status).then(function (a) {
+      botao.disabled = false;
+      var base = S || { tesouro: 0, ivvbCotas: 0, bovaCotas: 0, outras: 0, saldo: 0 };
+      var m = montarValores(a, base);
+      if (!m.lidos.length) {
+        status.className = "formmsg bad";
+        status.textContent = "Não consegui achar os números nesse print. Tente um print da tela Minha carteira inteira, sem cortar, ou preencha à mão.";
+        return;
+      }
+      status.className = "formmsg info";
+      status.textContent = "Achei: " + m.lidos.join(", ") + ". Confira abaixo e salve." + (m.avisos.length ? " " + m.avisos.join(" ") : "");
+      if (fotoDestino === "setup") {
+        $("s-tesouro").value = money(m.n.tesouro); $("s-ivvb").value = m.n.ivvbCotas ? String(m.n.ivvbCotas) : "";
+        $("s-bova").value = m.n.bovaCotas ? String(m.n.bovaCotas) : ""; $("s-outras").value = money(m.n.outras);
+        $("s-saldo").value = money(m.n.saldo); $("setup-guess").hidden = true;
+      } else {
+        $("form-deposito").hidden = true; $("form-ajustar").hidden = false;
+        $("a-tesouro").value = money(m.n.tesouro); $("a-ivvb").value = String(m.n.ivvbCotas); $("a-bova").value = String(m.n.bovaCotas);
+        $("a-outras").value = money(m.n.outras); $("a-saldo").value = money(m.n.saldo);
+        ajustePorFoto = true;
+        $("form-ajustar").scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, function (e) {
+      if (window.console) console.error("Leitura do print falhou:", e);
+      botao.disabled = false;
+      status.className = "formmsg bad";
+      status.textContent = "Não deu para ler o print agora. Confira a internet (na primeira vez o app baixa o leitor) e tente de novo.";
+    });
   });
 
   // ---------------- Render: Comprar ----------------
