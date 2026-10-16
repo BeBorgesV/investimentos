@@ -171,6 +171,9 @@ textarea {
 .buy .amount { font-family: var(--font-num); font-variant-numeric: tabular-nums; font-size: clamp(20px, 5.5vw, 26px); font-weight: 600; text-align: right; white-space: nowrap; }
 .buy.skip .amount { color: var(--muted); font-weight: 400; }
 .leftover { font-size: 14px; padding: 10px 12px; border-radius: 8px; background: var(--soft); }
+.proximo { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; border-radius: 8px; border: 1px dashed var(--line); font-size: 14.5px; }
+.proximo.on { border-style: solid; border-color: var(--ink); }
+.rec-row { display: flex; justify-content: space-between; align-items: baseline; gap: 6px 12px; flex-wrap: wrap; }
 .confirm-item { display: grid; grid-template-columns: 1fr; gap: 10px; padding: 12px 0; border-top: 1px solid var(--line); }
 .confirm-item:first-of-type { border-top: 0; padding-top: 0; }
 .confirm-item h3 { font-size: 15px; display: flex; align-items: center; gap: 8px; }
@@ -274,6 +277,17 @@ footer { font-size: 12.5px; color: var(--muted); }
         <label for="s-saldo">Saldo disponível para investir</label>
         <div class="input"><span>R$</span><input id="s-saldo" inputmode="decimal" autocomplete="off" placeholder="0,00"></div>
       </div>
+      <div class="grid2">
+        <div class="field">
+          <label for="s-rec-valor">Entra todo mês</label>
+          <div class="input"><span>R$</span><input id="s-rec-valor" inputmode="decimal" autocomplete="off" value="1.000,00"></div>
+        </div>
+        <div class="field">
+          <label for="s-rec-dia">No dia</label>
+          <div class="input"><input id="s-rec-dia" inputmode="numeric" autocomplete="off" value="10"></div>
+        </div>
+      </div>
+      <p class="hint">Todo mês, nesse dia, o app soma esse valor ao saldo sozinho. Deixe 0 se não tiver aporte automático.</p>
       <p class="hint" id="setup-guess" hidden>Preenchi com o que você tinha digitado na versão anterior. Confira com o app antes de salvar.</p>
       <button class="btn primary block" id="s-salvar" type="button">Salvar carteira</button>
     </div>
@@ -288,6 +302,18 @@ footer { font-size: 12.5px; color: var(--muted); }
         <div class="saldo-box">
           <div><p class="eyebrow">Saldo para investir</p><p class="v" id="c-saldo">R$ 0,00</p></div>
           <a class="btn primary" href="#comprar" id="c-ir-comprar">Investir</a>
+        </div>
+        <div class="rec-row"><p class="hint" id="c-rec"></p><button class="linkbtn" type="button" id="btn-rec">Editar</button></div>
+        <div id="form-rec" hidden>
+          <div class="grid2">
+            <div class="field"><label for="r-valor">Entra todo mês</label><div class="input"><span>R$</span><input id="r-valor" inputmode="decimal" autocomplete="off"></div></div>
+            <div class="field"><label for="r-dia">No dia</label><div class="input"><input id="r-dia" inputmode="numeric" autocomplete="off"></div></div>
+          </div>
+          <p class="hint" style="margin-top:8px">Deixe 0 para desligar. Se um mês não cair, toque em Desfazer na movimentação.</p>
+          <div class="btn-row" style="margin-top:10px">
+            <button class="btn" type="button" data-close="form-rec">Cancelar</button>
+            <button class="btn primary" type="button" id="r-salvar">Salvar</button>
+          </div>
         </div>
         <div class="alloc" aria-label="Divisão da carteira">
           <div class="alloc-row"><span class="lbl">Hoje</span><div class="stack" id="c-bar-hoje"></div></div>
@@ -371,8 +397,22 @@ footer { font-size: 12.5px; color: var(--muted); }
     <div id="comprar-main" hidden>
       <div class="card">
         <div class="saldo-box">
-          <div><p class="eyebrow">Saldo para investir</p><p class="v" id="b-saldo">R$ 0,00</p></div>
-          <a class="linkbtn" href="#carteira" id="b-saldo-edit">Mudou?</a>
+          <div><p class="eyebrow" id="b-saldo-label">Saldo para investir</p><p class="v" id="b-saldo">R$ 0,00</p></div>
+          <button class="btn" type="button" id="b-editar">Editar</button>
+        </div>
+        <div id="b-form-saldo" hidden>
+          <div class="field">
+            <label for="b-saldo-input">Saldo disponível no Nubank</label>
+            <div class="input"><span>R$</span><input id="b-saldo-input" inputmode="decimal" autocomplete="off"></div>
+          </div>
+          <div class="btn-row" style="margin-top:10px">
+            <button class="btn" type="button" data-close="b-form-saldo">Cancelar</button>
+            <button class="btn primary" type="button" id="b-saldo-salvar">Salvar</button>
+          </div>
+        </div>
+        <div class="proximo" id="b-proximo" hidden>
+          <p id="b-proximo-txt"></p>
+          <button class="btn" type="button" id="b-simular"></button>
         </div>
         <div class="grid2">
           <div class="field">
@@ -479,7 +519,7 @@ footer { font-size: 12.5px; color: var(--muted); }
     <div class="card">
       <h2>Todo mês</h2>
       <ol>
-        <li>Quando cair o dinheiro, abra <strong>Carteira</strong> e toque em <strong>Entrou dinheiro</strong>. Ou mande os prints do Nubank em <strong>Atualizar com prints</strong>.</li>
+        <li>No dia do seu aporte automático o app soma o valor ao saldo sozinho. Se entrar dinheiro fora disso, toque em <strong>Entrou dinheiro</strong> na Carteira. Para acertar tudo de uma vez, mande os prints do Nubank em <strong>Atualizar com prints</strong>.</li>
         <li>Vá em <strong>Comprar</strong> e veja o que comprar.</li>
         <li>No app do Nubank: Tesouro em Investir → Tesouro Direto → <strong>Tesouro IPCA+ 2032</strong>. ETFs: busque <code>IVVB11</code> ou <code>BOVA11</code>; se pedir lote de 10, use <code>IVVB11F</code> ou <code>BOVA11F</code>.</li>
         <li>Volte aqui, toque em <strong>Fiz essas compras</strong> e confirme. Pronto: carteira e saldo atualizados.</li>
@@ -577,6 +617,36 @@ footer { font-size: 12.5px; color: var(--muted); }
 
   function save() { if (!lsSet(STATE_KEY, S)) toast("Não deu para salvar neste navegador. Desligue o modo privado."); }
 
+  // ---------------- Aporte automático (ex.: R$ 1.000 todo dia 10) ----------------
+  function chaveMes(y, m) { return y + "-" + String(m).padStart(2, "0"); }
+  function proximoMes(k) { var p = String(k).split("-"); var y = +p[0], m = +p[1] + 1; if (m > 12) { m = 1; y++; } return chaveMes(y, m); }
+  function diasNoMes(y, m) { return new Date(y, m, 0).getDate(); }
+  function dataDoAporte(k, dia) { var p = k.split("-"); var y = +p[0], m = +p[1]; return new Date(y, m - 1, Math.min(dia, diasNoMes(y, m))); }
+  function fmtDia(d) { return String(d.getDate()).padStart(2, "0") + "/" + String(d.getMonth() + 1).padStart(2, "0"); }
+  function ultimoInicial(dia) {
+    var h = new Date(), k = chaveMes(h.getFullYear(), h.getMonth() + 1);
+    if (h.getDate() >= dia) return k;
+    var m = h.getMonth(), y = h.getFullYear(); if (m === 0) { m = 12; y--; }
+    return chaveMes(y, m);
+  }
+  function proximaDataAporte() {
+    if (!S || !S.recorrente || !(S.recorrente.valor > 0)) return null;
+    return dataDoAporte(proximoMes(S.recorrente.ultimo), S.recorrente.dia);
+  }
+  function aplicarRecorrente() {
+    if (!S || !S.recorrente || !(S.recorrente.valor > 0)) return 0;
+    var rec = S.recorrente, agora = new Date(), n = 0, k = proximoMes(rec.ultimo);
+    while (n < 24) {
+      var d = dataDoAporte(k, rec.dia);
+      if (d > agora) break;
+      registrar({ tipo: "deposito", titulo: "Aporte do dia " + rec.dia, detalhe: "automático", efeito: { saldo: rec.valor }, data: d.toISOString() });
+      rec.ultimo = k; n++; k = proximoMes(k);
+    }
+    if (n) save();
+    return n;
+  }
+  if (S && !S.recorrente) { S.recorrente = { valor: 1000, dia: 10, ultimo: ultimoInicial(10) }; save(); }
+
   function precoBoletim(k) {
     var p = boletim && boletim.precos;
     var v = p ? Number(k === "ivvb" ? p.ivvb : p.bova) : 0;
@@ -667,8 +737,8 @@ footer { font-size: 12.5px; color: var(--muted); }
     ["saldo", "tesouro", "outras"].forEach(function (k) { if (Math.abs(S[k]) < 0.005) S[k] = 0; });
   }
   function registrar(mov) {
-    mov.id = "m" + Date.now();
-    mov.data = new Date().toISOString();
+    mov.id = "m" + Date.now() + Math.floor(Math.random() * 1000);
+    mov.data = mov.data || new Date().toISOString();
     aplicar(mov.efeito, 1);
     S.movs.push(mov);
     if (S.movs.length > 300) S.movs = S.movs.slice(-300);
@@ -696,6 +766,10 @@ footer { font-size: 12.5px; color: var(--muted); }
     $("c-total").textContent = brl.format(v.total);
     $("c-saldo").textContent = brl.format(S.saldo);
     $("c-ir-comprar").hidden = !(S.saldo > 0);
+    var prox = proximaDataAporte();
+    $("c-rec").textContent = prox
+      ? "Todo dia " + S.recorrente.dia + " entram " + brl.format(S.recorrente.valor) + " · próximo em " + fmtDia(prox)
+      : "Sem aporte automático configurado.";
     fillBar($("c-bar-hoje"), { tesouro: v.tesouro, ivvb: v.ivvb, brasil: v.brasil });
     fillBar($("c-bar-meta"), { tesouro: 40, ivvb: 30, brasil: 30 });
 
@@ -775,6 +849,8 @@ footer { font-size: 12.5px; color: var(--muted); }
       outras: parseBR($("s-outras").value), saldo: parseBR($("s-saldo").value),
       precos: {}, movs: []
     };
+    var recDia = Math.min(28, Math.max(1, parseInt0($("s-rec-dia").value) || 10));
+    S.recorrente = { valor: parseBR($("s-rec-valor").value), dia: recDia, ultimo: ultimoInicial(recDia) };
     if (precosDoPrint) { Object.keys(precosDoPrint).forEach(function (k) { S.precos[k] = { valor: precosDoPrint[k], data: today(), fonte: "print" }; }); precosDoPrint = null; }
     S.movs.push({ id: "m0", data: new Date().toISOString(), tipo: "inicio", titulo: "Carteira configurada", detalhe: "", efeito: {} });
     save();
@@ -1097,6 +1173,23 @@ footer { font-size: 12.5px; color: var(--muted); }
     });
   });
 
+  // Aporte automático: editar
+  $("btn-rec").addEventListener("click", function () {
+    var rec = S.recorrente || { valor: 0, dia: 10 };
+    $("r-valor").value = money(rec.valor); $("r-dia").value = String(rec.dia);
+    $("form-rec").hidden = false; $("r-valor").focus();
+  });
+  $("r-salvar").addEventListener("click", function () {
+    var dia = Math.min(28, Math.max(1, parseInt0($("r-dia").value) || 10));
+    var valor = parseBR($("r-valor").value);
+    var antes = S.recorrente;
+    S.recorrente = { valor: valor, dia: dia, ultimo: antes && antes.dia === dia ? antes.ultimo : ultimoInicial(dia) };
+    save();
+    $("form-rec").hidden = true;
+    renderAll();
+    toast(valor > 0 ? "Aporte automático: " + brl.format(valor) + " todo dia " + dia : "Aporte automático desligado");
+  });
+
   // ---------------- Render: Comprar ----------------
   var last = null;
   function setRow(key, amount, how, skip) {
@@ -1123,17 +1216,32 @@ footer { font-size: 12.5px; color: var(--muted); }
     if (pb && !precoDigitado("bova")) origem.push("BOVA11 de " + fmtData(pb.data));
     $("p-hint").textContent = origem.length ? "Preço " + origem.join(" e ") + ". Se o app mostrar outro, digite aqui." : "Usando o preço que você digitou.";
 
-    $("b-saldo").textContent = brl.format(S.saldo);
+    var prox = proximaDataAporte();
+    if (!prox) simular = false;
+    var extra = simular ? S.recorrente.valor : 0;
+    var aporte = r2(S.saldo + extra);
+    $("b-saldo-label").textContent = simular ? "Saldo previsto para " + fmtDia(prox) : "Saldo para investir";
+    $("mesLabel").textContent = "Aporte de " + (simular ? prox : new Date()).toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+    $("b-saldo").textContent = brl.format(aporte);
+    $("b-editar").hidden = simular;
+    $("b-proximo").hidden = !prox;
+    $("b-proximo").classList.toggle("on", simular);
+    if (prox) {
+      $("b-proximo-txt").textContent = simular
+        ? "Mostrando o que comprar em " + fmtDia(prox) + ", quando entrarem " + brl.format(S.recorrente.valor) + ". Os preços podem mudar até lá."
+        : "Em " + fmtDia(prox) + " entram " + brl.format(S.recorrente.valor) + ". Saldo previsto: " + brl.format(r2(S.saldo + S.recorrente.valor)) + ".";
+      $("b-simular").textContent = simular ? "Voltar para o saldo de hoje" : "Ver o que comprar em " + fmtDia(prox);
+    }
     var cv = valores();
     var v = { tesouro: cv.tesouro, ivvb: S.ivvbCotas * precoI, brasil: S.bovaCotas * precoB + S.outras,
-              aporte: S.saldo, precoIvvb: precoI, precoBova: precoB };
+              aporte: aporte, precoIvvb: precoI, precoBova: precoB };
     var r = calcular(v);
     last = { v: v, r: r };
-    var temAporte = S.saldo > 0;
+    var temAporte = aporte > 0;
     var shareNow = function (k) { return r.total0 > 0 ? r.atual[k] / r.total0 : 0; };
 
     if (!temAporte) {
-      ["tesouro", "ivvb", "brasil"].forEach(function (k) { setRow(k, "—", "Sem saldo para investir. Quando cair dinheiro, toque em Entrou dinheiro na Carteira.", true); });
+      ["tesouro", "ivvb", "brasil"].forEach(function (k) { setRow(k, "—", "Sem saldo para investir agora. Veja acima o que comprar quando entrar o próximo aporte.", true); });
     } else {
       if (r.compra.tesouro > 0) setRow("tesouro", brl.format(r.compra.tesouro), "Investir → Tesouro Direto → Tesouro IPCA+ 2032 → digite esse valor.", false);
       else if (r.tesAbaixoMinimo) setRow("tesouro", brl.format(0), "O valor ficou abaixo do mínimo do Tesouro, então foi para a sobra.", true);
@@ -1159,12 +1267,28 @@ footer { font-size: 12.5px; color: var(--muted); }
     fillBar($("bar-depois"), r.depois);
     fillBar($("bar-meta"), { tesouro: 40, ivvb: 30, brasil: 30 });
     var algo = temAporte && (r.compra.tesouro > 0 || (r.cotas.ivvb || 0) > 0 || (r.cotas.brasil || 0) > 0 || (r.cotas.ivvb === null && r.compra.ivvb > 0) || (r.cotas.brasil === null && r.compra.brasil > 0));
-    $("btn-fiz").disabled = !algo;
-    $("badge-comprar").hidden = !algo;
+    $("btn-fiz").disabled = !algo || simular;
+    $("btn-fiz").textContent = simular ? "Disponível em " + fmtDia(prox) : "Fiz essas compras";
+    if (!simular) $("badge-comprar").hidden = !algo;
     $("limite-acoes").textContent = brl.format(0.10 * (cv.investido + S.saldo));
   }
 
   ["p-ivvb", "p-bova"].forEach(function (id) { $(id).addEventListener("input", renderComprar); });
+
+  var simular = false;
+  $("b-simular").addEventListener("click", function () { simular = !simular; $("confirmar").hidden = true; renderComprar(); });
+  $("b-editar").addEventListener("click", function () {
+    $("b-saldo-input").value = money(S.saldo); $("b-form-saldo").hidden = false; $("b-saldo-input").focus();
+  });
+  $("b-saldo-salvar").addEventListener("click", function () {
+    var novo = parseBR($("b-saldo-input").value);
+    var dif = r2(novo - S.saldo);
+    $("b-form-saldo").hidden = true;
+    if (Math.abs(dif) < 0.005) return;
+    registrar({ tipo: "ajuste", titulo: "Saldo corrigido", detalhe: brl.format(S.saldo) + " → " + brl.format(novo), efeito: { saldo: dif } });
+    renderAll();
+    toast("Saldo agora: " + brl.format(S.saldo));
+  });
 
   // Confirmar compras
   $("btn-fiz").addEventListener("click", function () {
@@ -1310,6 +1434,7 @@ footer { font-size: 12.5px; color: var(--muted); }
     Array.prototype.forEach.call(document.querySelectorAll(".tab"), function (a) {
       if (a.getAttribute("data-tab") === t) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
     });
+    if (t !== "comprar" && simular) simular = false;
     if (t === "comprar") renderComprar();
     if (t === "guia") updateAskLink();
     window.scrollTo(0, 0);
@@ -1322,8 +1447,15 @@ footer { font-size: 12.5px; color: var(--muted); }
   var mes = now.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
   $("mesLabel").textContent = "Aporte de " + mes;
 
+  var aplicados = aplicarRecorrente();
   renderAll();
   showTab();
+  if (aplicados) toast("Entrou o aporte do dia " + S.recorrente.dia + ": +" + brl.format(S.recorrente.valor * aplicados));
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState !== "visible") return;
+    var n = aplicarRecorrente();
+    if (n) { renderAll(); toast("Entrou o aporte do dia " + S.recorrente.dia + ": +" + brl.format(S.recorrente.valor * n)); }
+  });
 
   fetch("boletim.json", { cache: "no-store" })
     .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
