@@ -207,6 +207,17 @@ textarea {
 .guide ol, .guide ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; }
 .guide code { font-family: var(--font-num); font-size: 13.5px; background: var(--soft); padding: 1px 5px; border-radius: 3px; }
 .limit { font-size: 14.5px; padding: 10px 12px; border-radius: 8px; background: var(--soft); }
+.view ul.destaques { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0; }
+.destaque { display: flex; flex-direction: column; gap: 6px; padding: 14px 0; border-top: 1px solid var(--line); }
+.destaque:first-child { border-top: 0; padding-top: 0; }
+.destaque-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.destaque-head strong { font-size: 16px; }
+.destaque .mov { font-family: var(--font-num); font-variant-numeric: tabular-nums; font-size: 13.5px; font-weight: 600; }
+.destaque .mov.up { color: var(--good); } .destaque .mov.down { color: var(--bad); }
+.destaque p { font-size: 14.5px; color: var(--muted); }
+.destaque .row { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.destaque .src { font-size: 12.5px; color: var(--muted); }
+.btn.small { font-size: 13.5px; padding: 8px 12px; }
 .classes { display: flex; flex-direction: column; }
 .classe { display: flex; flex-direction: column; gap: 8px; padding: 14px 0; border-top: 1px solid var(--line); }
 .classe:first-child { border-top: 0; padding-top: 0; }
@@ -501,7 +512,7 @@ footer { font-size: 12.5px; color: var(--muted); }
         <h2>O que aconteceu</h2>
         <ul class="news" id="bol-news"></ul>
       </div>
-      <p class="hint">O Claude atualiza este boletim todo dia 1º, com as fontes de cada notícia.</p>
+      <p class="hint">O Claude atualiza este boletim todo dia 10 de manhã, antes do seu aporte, com as fontes de cada notícia. As empresas que mais se mexeram no mês ficam na aba <a href="#acoes">Explorar</a>.</p>
     </div>
   </section>
 
@@ -510,6 +521,12 @@ footer { font-size: 12.5px; color: var(--muted); }
     <div class="view-head">
       <p class="eyebrow">Para estudar, não para seguir</p>
       <h1 id="h-acoes">Explorar</h1>
+    </div>
+
+    <div class="card" id="destaques-card" hidden>
+      <div class="row-between"><h2>Em destaque no mês</h2><span class="hint" id="destaques-data"></span></div>
+      <p class="hint">As empresas que mais se mexeram na bolsa, para cima e para baixo, e por quê. Não é lista de compra: serve para você estudar.</p>
+      <ul class="destaques" id="destaques"></ul>
     </div>
 
     <div class="card">
@@ -1619,13 +1636,7 @@ footer { font-size: 12.5px; color: var(--muted); }
   }
   $("pergunta").addEventListener("input", updateAskLink);
 
-  function updateEstudar() {
-    var t = $("t-ticker").value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 7);
-    if ($("t-ticker").value !== t) $("t-ticker").value = t;
-    var a = $("t-estudar");
-    if (!/^[A-Z]{4}\d{1,2}$/.test(t)) { a.setAttribute("aria-disabled", "true"); a.removeAttribute("href"); a.textContent = "Estudar no Claude"; return; }
-    a.removeAttribute("aria-disabled");
-    a.textContent = "Estudar " + t + " no Claude";
+  function linkEstudo(t, contexto) {
     var limite = S ? 0.10 * (valores().investido + S.saldo) : 0;
     var txt = [
       "Quero estudar a ação " + t + ", negociada na B3 (compro pelo Nubank). Sou investidor iniciante, 22 anos, foco em longo prazo.",
@@ -1638,7 +1649,55 @@ footer { font-size: 12.5px; color: var(--muted); }
       "Depois responda ao meu checklist: dá para explicar o negócio em duas frases? O lucro cresceu de forma consistente em 5 anos? A dívida é menor que uns 3 anos de lucro operacional? Que quedas fortes a ação já teve e por quê?",
       "Não me diga se devo comprar; quero entender para decidir sozinho. No meu plano, ações escolhidas por mim ficam dentro da fatia Brasil e somam no máximo 10% da carteira" + (limite > 0 ? " (hoje " + brl.format(limite) + ")." : ".")
     ];
-    a.href = "https://claude.ai/new?q=" + encodeURIComponent(txt.join("\n"));
+    if (contexto) txt.splice(1, 0, "Ela apareceu no meu boletim do mês: " + contexto);
+    return "https://claude.ai/new?q=" + encodeURIComponent(txt.join("\n"));
+  }
+  function updateEstudar() {
+    var t = $("t-ticker").value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 7);
+    if ($("t-ticker").value !== t) $("t-ticker").value = t;
+    var a = $("t-estudar");
+    if (!/^[A-Z]{4}\d{1,2}$/.test(t)) { a.setAttribute("aria-disabled", "true"); a.removeAttribute("href"); a.textContent = "Estudar no Claude"; return; }
+    a.removeAttribute("aria-disabled");
+    a.textContent = "Estudar " + t + " no Claude";
+    a.href = linkEstudo(t);
+  }
+  function renderDestaques() {
+    var lista = boletim && Array.isArray(boletim.destaques) ? boletim.destaques.slice(0, 8) : [];
+    $("destaques-card").hidden = !lista.length;
+    if (!lista.length) return;
+    $("destaques-data").textContent = boletim.atualizadoEm ? "até " + fmtData(boletim.atualizadoEm) : "";
+    var ul = $("destaques"); ul.textContent = "";
+    lista.forEach(function (d) {
+      var t = String(d.ticker || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 7);
+      var li = document.createElement("li"); li.className = "destaque";
+      var head = document.createElement("div"); head.className = "destaque-head";
+      var nm = document.createElement("strong"); nm.textContent = String(d.empresa || t);
+      head.appendChild(nm);
+      if (t) { var tk = document.createElement("span"); tk.className = "ticker"; tk.textContent = t; head.appendChild(tk); }
+      li.appendChild(head);
+      if (d.movimento) {
+        var mv = document.createElement("span"); mv.className = "mov";
+        var txt = String(d.movimento);
+        var sobe = /\+\d/.test(txt), cai = /[\u2212-]\d|caiu|queda/i.test(txt);
+        if (sobe && !cai) mv.className += " up"; else if (cai && !sobe) mv.className += " down";
+        mv.textContent = txt; li.appendChild(mv);
+      }
+      var p = document.createElement("p"); p.textContent = String(d.motivo || ""); li.appendChild(p);
+      var row = document.createElement("div"); row.className = "row";
+      var src = document.createElement("span"); src.className = "src";
+      var url = safeUrl(d.url);
+      if (url) { var a = document.createElement("a"); a.href = url; a.target = "_blank"; a.rel = "noopener"; a.textContent = String(d.fonte || "Fonte"); src.append("Fonte: ", a); }
+      else if (d.fonte) src.textContent = "Fonte: " + String(d.fonte);
+      row.appendChild(src);
+      if (/^[A-Z]{4}\d{1,2}$/.test(t)) {
+        var b = document.createElement("a"); b.className = "btn small"; b.target = "_blank"; b.rel = "noopener";
+        b.textContent = "Estudar " + t;
+        b.href = linkEstudo(t, String(d.empresa || t) + ", " + String(d.movimento || "") + ". " + String(d.motivo || ""));
+        row.appendChild(b);
+      }
+      li.appendChild(row);
+      ul.appendChild(li);
+    });
   }
   $("t-ticker").addEventListener("input", updateEstudar);
   Array.prototype.forEach.call(document.querySelectorAll("#chips .chip"), function (c) {
@@ -1670,7 +1729,7 @@ footer { font-size: 12.5px; color: var(--muted); }
   }
   window.addEventListener("hashchange", showTab);
 
-  function renderAll() { renderCarteira(); renderComprar(); renderBoletim(); updateAskLink(); }
+  function renderAll() { renderCarteira(); renderComprar(); renderBoletim(); renderDestaques(); updateAskLink(); }
 
   var now = new Date();
   var mes = now.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });

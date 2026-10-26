@@ -1,48 +1,98 @@
 {
   "mesReferencia": "outubro de 2026",
-  "atualizadoEm": "2026-10-16",
-  "proximaAtualizacao": "2026-11-01",
-  "resumo": "Outubro está sendo um mês de eleição na bolsa. O Ibovespa subiu depois do 1º turno e devolveu parte da alta quando as pesquisas passaram a mostrar empate técnico para o 2º turno, em 25/10. A inflação de setembro veio acima do esperado e a taxa do Tesouro IPCA+ caiu. Para o seu plano, nada muda: ele foi feito para seguir igual em mês bom e em mês ruim.",
+  "atualizadoEm": "2026-10-26",
+  "proximaAtualizacao": "2026-11-10",
+  "resumo": "O 2º turno, em 25/10, reelegeu Lula com 51,8% dos votos válidos, contra 48,2% de Flávio Bolsonaro. Em outubro o mercado apostava no resultado contrário: o Ibovespa subiu 10% até sexta e o dólar caiu abaixo de R$ 5. Na noite de domingo os ativos brasileiros negociados no exterior caíram perto de 19% e o real perdeu cerca de 11% em Chicago, e analistas esperam um dia de forte queda na B3, com dólar e juros em alta. Para quem aporta todo mês, o plano segue igual: queda é quando o aporte compra mais barato, e o IVVB11 sobe junto com o dólar.",
   "indicadores": [
     { "nome": "Selic", "valor": "13,75% a.a.", "nota": "Próximo Copom: 3 e 4/11" },
-    { "nome": "IPCA 12 meses", "valor": "4,58%", "nota": "Setembro: 0,82%. Teto da meta: 4,5%" },
-    { "nome": "Tesouro IPCA+ 2032", "valor": "IPCA + 6,68%", "nota": "Taxa de 13/10 (era 7,62% em 1/10)" },
-    { "nome": "Ibovespa", "valor": "204.324 pts", "nota": "Fechamento de 15/10" },
-    { "nome": "Dólar", "valor": "R$ 5,08", "nota": "Fechamento de 15/10" },
-    { "nome": "S&P 500", "valor": "≈ 7.750 pts", "nota": "Início de outubro, +12,5% no ano" }
+    { "nome": "Inflação 12 meses", "valor": "4,62%", "nota": "IPCA-15 de outubro: 0,32%, abaixo do esperado" },
+    { "nome": "Tesouro IPCA+ 2032", "valor": "IPCA + 6,76%", "nota": "Taxa de 23/10, antes do resultado" },
+    { "nome": "Ibovespa", "valor": "205.083 pts", "nota": "Fechamento de 23/10, +10,1% em outubro" },
+    { "nome": "Dólar", "valor": "R$ 4,99", "nota": "23/10; no exterior, após o resultado, apontava R$ 5,30 a 5,50" },
+    { "nome": "S&P 500", "valor": "≈ 7.630 pts", "nota": "23/10; Fed decide em 28/10" }
   ],
-  "precos": { "ivvb": 438.01, "bova": 201.26, "data": "16/10" },
-  "noPlano": "Nada muda. Este mês a calculadora manda o dinheiro para a bolsa, começando pelo IVVB11, porque o Tesouro está acima da meta. A queda na taxa do IPCA+ valorizou o título que você já tem; se ficar com ele até 2032, você recebe a taxa que contratou na compra.",
+  "precos": { "ivvb": 430.0, "bova": 201.69, "data": "23/10" },
+  "noPlano": "Nada muda e não venda no susto: a queda pode durar alguns dias. Se for comprar com o saldo agora, atualize antes o preço das cotas na aba Comprar, porque o de sexta ficou velho (BOVA11 deve abrir mais barato e IVVB11 mais caro). O Tesouro deve mostrar uma queda temporária no valor com a alta dos juros; levando até 2032, você recebe a taxa que contratou.",
   "noticias": [
     {
-      "titulo": "2º turno apertado mexe com a bolsa",
-      "resumo": "Flávio Bolsonaro teve 47,03% dos votos válidos no 1º turno e Lula, 45,16%. Pesquisas de 10 a 13/10 mostram empate técnico para o 2º turno, em 25/10, e a bolsa e o dólar vêm oscilando a cada nova pesquisa.",
-      "fonte": "Mix Vale",
-      "url": "https://www.mixvale.com.br/2026/10/15/ibovespa-recua-106-e-dolar-vai-a-r-508-apos-fim-da-escala-6x1-e-empate-tecnico-eleitoral/"
+      "titulo": "Lula é reeleito no 2º turno",
+      "resumo": "Lula teve 51,79% dos votos válidos e Flávio Bolsonaro, 48,21%. Flávio disse que não reconhece o resultado e vai pedir a anulação da eleição, o que soma incerteza política aos próximos dias.",
+      "fonte": "InfoMoney",
+      "url": "https://www.infomoney.com.br/politica/ao-vivo-eleicoes-segundo-turno-2026/"
     },
     {
-      "titulo": "Inflação de setembro acima do esperado",
-      "resumo": "O IPCA subiu 0,82% em setembro, puxado pela conta de luz (fim do bônus de Itaipu), pelas passagens aéreas e pelos alimentos. Em 12 meses a inflação está em 4,58%, logo acima do teto da meta.",
-      "fonte": "Agência Brasil",
-      "url": "https://agenciabrasil.ebc.com.br/economia/noticia/2026-10/inflacao-oficial-de-setembro-fica-em-082-mostra-ibge"
+      "titulo": "Ativos brasileiros despencam no exterior",
+      "resumo": "Na noite de domingo, o EWZ (ETF de ações brasileiras em Nova York) caiu cerca de 19%, os papéis da Petrobras e do Itaú lá fora perderam perto de 12% e o real caiu cerca de 11% em Chicago. Analistas falam em possível circuit breaker na abertura da B3, que pausa os negócios por 30 minutos se o Ibovespa cair 10%.",
+      "fonte": "Seu Dinheiro",
+      "url": "https://www.seudinheiro.com/2026/bolsa-dolar/petrobras-despenca-12-vale-cai-4-e-ewz-tomba-19-a-reacao-imediata-a-vitoria-de-lula-e-o-que-vem-por-ai-lils-ccgg/"
     },
     {
-      "titulo": "Selic em 13,75% e taxa do IPCA+ em queda",
-      "resumo": "O Banco Central cortou a Selic para 13,75% em setembro e volta a decidir em 3 e 4/11. Em outubro, a taxa do Tesouro IPCA+ 2032 caiu de cerca de 7,6% para 6,7% acima da inflação, o que valoriza quem já tinha o título.",
-      "fonte": "InvestNews",
-      "url": "https://investnews.com.br/investimentos/tesouro-direto-taxas-rendimento-hoje-ipca-sobe-pos-feriado-13102026/amp/"
+      "titulo": "Bolsa subiu 10% em outubro até a eleição",
+      "resumo": "Com o mercado apostando na vitória da oposição, o Ibovespa teve em 5/10 a maior alta diária em mais de seis anos (+7,7%) e fechou a sexta (23/10) em 205 mil pontos, com o dólar abaixo de R$ 5. A queda no exterior na noite de domingo indica que parte dessa alta pode ser devolvida.",
+      "fonte": "InfoMoney",
+      "url": "https://www.infomoney.com.br/mercados/ibovespa-hoje-bolsa-de-valores-ao-vivo-23102026/"
     },
     {
-      "titulo": "Senado aprova fim da escala 6x1",
-      "resumo": "A PEC reduz a jornada sem corte de salário: 5x2 e 42 horas semanais cerca de 60 dias após a promulgação, e 40 horas um ano depois. Analistas avaliam que parte do custo pode ser repassada aos preços.",
-      "fonte": "Mix Vale",
-      "url": "https://www.mixvale.com.br/2026/10/15/ibovespa-recua-106-e-dolar-vai-a-r-508-apos-fim-da-escala-6x1-e-empate-tecnico-eleitoral/"
+      "titulo": "Prévia da inflação abaixo do esperado",
+      "resumo": "O IPCA-15 subiu 0,32% em outubro, contra 0,43% esperado. Alimentos pressionaram e a conta de luz caiu com a bandeira verde. Em 12 meses, a inflação está em 4,62%.",
+      "fonte": "InfoMoney",
+      "url": "https://www.infomoney.com.br/economia/ipca-15-previa-inflacao-ibge-outubro-2026/"
     },
     {
-      "titulo": "Bolsa americana em máxima histórica",
-      "resumo": "O S&P 500 começou outubro no recorde, com alta de cerca de 12,5% no ano. O Fed subiu os juros em setembro, para 3,75% a 4%, e volta a decidir em 27 e 28/10. Os balanços das grandes empresas de tecnologia saem no fim do mês.",
-      "fonte": "DailyForex",
-      "url": "https://es.dailyforex.com/stock-market-today/2026/10/sp-500-inicia-octubre-de-2026-en-maximos-historicos/250273"
+      "titulo": "Semana de Fed e balanços nos EUA",
+      "resumo": "O banco central americano decide os juros na quarta (28/10) e a expectativa é de manutenção. Alphabet, Microsoft e Amazon divulgam resultados nesta semana; o S&P 500 terminou a semana passada com leve queda.",
+      "fonte": "AP / The Spokesman-Review",
+      "url": "https://www.spokesman.com/stories/2026/oct/23/dow-sp-500-fall-tech-steadies-to-end-rocky-week/"
+    }
+  ],
+  "destaques": [
+    {
+      "ticker": "MGLU3",
+      "empresa": "Magazine Luiza",
+      "movimento": "+80% em outubro até 20/10",
+      "motivo": "Subiu com a expectativa de juros mais baixos caso a oposição vencesse. Varejistas endividadas costumam sofrer quando os juros sobem, e esse cenário mudou com o resultado.",
+      "fonte": "InfoMoney",
+      "url": "https://www.infomoney.com.br/mercados/ibovespa-hoje-bolsa-de-valores-ao-vivo-20102026/"
+    },
+    {
+      "ticker": "PETR4",
+      "empresa": "Petrobras",
+      "movimento": "+8,2% em 5/10; −12% no exterior após o 2º turno",
+      "motivo": "Estatal: o preço reage muito à expectativa sobre interferência do governo em preços e investimentos.",
+      "fonte": "Seu Dinheiro",
+      "url": "https://www.seudinheiro.com/2026/bolsa-dolar/petrobras-despenca-12-vale-cai-4-e-ewz-tomba-19-a-reacao-imediata-a-vitoria-de-lula-e-o-que-vem-por-ai-lils-ccgg/"
+    },
+    {
+      "ticker": "B3SA3",
+      "empresa": "B3",
+      "movimento": "+22,6% em 5/10",
+      "motivo": "A dona da bolsa ganha com volume de negócios e liderou o rali do setor financeiro depois do 1º turno, junto com BTG e os grandes bancos.",
+      "fonte": "InfoMoney",
+      "url": "https://www.infomoney.com.br/mercados/ibovespa-hoje-bolsa-de-valores-ao-vivo-05102026/"
+    },
+    {
+      "ticker": "VALE3",
+      "empresa": "Vale",
+      "movimento": "Caiu em vários pregões de outubro; −4% no exterior após o 2º turno",
+      "motivo": "Minério de ferro fraco e real forte, que reduz o valor das exportações em reais. Caiu bem menos que as outras gigantes depois do resultado.",
+      "fonte": "InfoMoney",
+      "url": "https://www.infomoney.com.br/mercados/ibovespa-hoje-bolsa-de-valores-ao-vivo-20102026/"
+    },
+    {
+      "ticker": "EMBJ3",
+      "empresa": "Embraer",
+      "movimento": "+0,9% em 23/10",
+      "motivo": "Carteira de pedidos recorde no 3º trimestre. Exporta quase tudo, então costuma ganhar quando o dólar sobe.",
+      "fonte": "InfoMoney",
+      "url": "https://www.infomoney.com.br/mercados/ibovespa-hoje-bolsa-de-valores-ao-vivo-23102026/"
+    },
+    {
+      "ticker": "SUZB3",
+      "empresa": "Suzano",
+      "movimento": "−5,4% em 5/10",
+      "motivo": "Exportadora de celulose: perdeu com o real forte antes da eleição. Com o dólar subindo, esse efeito passa a jogar a favor dela.",
+      "fonte": "InfoMoney",
+      "url": "https://www.infomoney.com.br/mercados/ibovespa-hoje-bolsa-de-valores-ao-vivo-05102026/"
     }
   ]
 }
