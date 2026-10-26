@@ -875,10 +875,20 @@ footer { font-size: 12.5px; color: var(--muted); }
     if (!m) return;
     aplicar(m.efeito, -1);
     if (m.precosAntes) S.precos = m.precosAntes;
+    if (m.medioAntes) S.medio = m.medioAntes;
     S.movs.pop();
     save();
     renderAll();
     toast("Desfeito: " + m.titulo);
+  }
+
+  // Preço médio (quanto você pagou por cota) e quanto a cota mudou desde então
+  function textoMedio(k, p, cotas) {
+    var m = S && S.medio ? S.medio[k] : 0;
+    if (!(m > 0) || !(cotas > 0)) return "";
+    var t = " · médio " + brl.format(m);
+    if (p && p.valor > 0) { var d = (p.valor / m - 1) * 100; t += " (" + (d >= 0 ? "+" : "−") + Math.abs(d).toFixed(1).replace(".", ",") + "%)"; }
+    return t;
   }
 
   // ---------------- Render: Carteira ----------------
@@ -906,8 +916,8 @@ footer { font-size: 12.5px; color: var(--muted); }
     var H = $("c-holdings"); H.textContent = "";
     var linhas = [
       { cor: "var(--c-tesouro)", nome: "Tesouro IPCA+ 2032", valor: v.tesouro, sub: S.tesouroData ? "valor de " + fmtData(S.tesouroData) + " + compras depois" : "", meta: "meta 40%" },
-      { cor: "var(--c-ivvb)", nome: "IVVB11", valor: v.ivvb, sub: S.ivvbCotas + (S.ivvbCotas === 1 ? " cota" : " cotas") + (pi ? " × " + brl.format(pi.valor) : " · digite o preço em Comprar"), meta: "meta 30%" },
-      { cor: "var(--c-brasil)", nome: "BOVA11", valor: v.bova, sub: S.bovaCotas + (S.bovaCotas === 1 ? " cota" : " cotas") + (pb ? " × " + brl.format(pb.valor) : ""),
+      { cor: "var(--c-ivvb)", nome: "IVVB11", valor: v.ivvb, sub: S.ivvbCotas + (S.ivvbCotas === 1 ? " cota" : " cotas") + (pi ? " × " + brl.format(pi.valor) : " · digite o preço em Comprar") + textoMedio("ivvb", pi, S.ivvbCotas), meta: "meta 30%" },
+      { cor: "var(--c-brasil)", nome: "BOVA11", valor: v.bova, sub: S.bovaCotas + (S.bovaCotas === 1 ? " cota" : " cotas") + (pb ? " × " + brl.format(pb.valor) : "") + textoMedio("bova", pb, S.bovaCotas),
         pctText: v.investido > 0 ? "Brasil " + pct(v.brasil / v.investido) + " · meta 30%" : "" },
     ];
     if (S.outras > 0) linhas.push({ cor: "var(--c-outras)", nome: "Outras ações", valor: v.outras, sub: "conta na fatia Brasil", pctText: v.investido > 0 ? pct(v.outras / v.investido) : "" });
@@ -978,6 +988,7 @@ footer { font-size: 12.5px; color: var(--muted); }
     var recDia = Math.min(28, Math.max(1, parseInt0($("s-rec-dia").value) || 10));
     S.recorrente = { valor: parseBR($("s-rec-valor").value), dia: recDia, ultimo: ultimoInicial(recDia) };
     if (precosDoPrint) { Object.keys(precosDoPrint).forEach(function (k) { S.precos[k] = { valor: precosDoPrint[k], data: today(), fonte: "print" }; }); precosDoPrint = null; }
+    S.medio = {}; aplicarMedioDoPrint(); medioDoPrint = null;
     S.movs.push({ id: "m0", data: new Date().toISOString(), tipo: "inicio", titulo: "Carteira configurada", detalhe: "", efeito: {} });
     save();
     renderAll();
@@ -1012,21 +1023,24 @@ footer { font-size: 12.5px; color: var(--muted); }
     var mudou = Object.keys(ef).some(function (k) { return Math.abs(ef[k]) > 0.004; });
     $("form-ajustar").hidden = true; $("foto-status").hidden = true;
     if (!mudou) {
-      if (ajustePorFoto && precosDoPrint) {
+      if (ajustePorFoto && (precosDoPrint || medioDoPrint)) {
         S.precos = S.precos || {};
-        Object.keys(precosDoPrint).forEach(function (k) { S.precos[k] = { valor: precosDoPrint[k], data: today(), fonte: "print" }; });
+        Object.keys(precosDoPrint || {}).forEach(function (k) { S.precos[k] = { valor: precosDoPrint[k], data: today(), fonte: "print" }; });
+        aplicarMedioDoPrint();
         save(); renderAll(); toast("Preços das cotas atualizados");
       }
-      ajustePorFoto = false; precosDoPrint = null; return;
+      ajustePorFoto = false; precosDoPrint = null; medioDoPrint = null; return;
     }
     if (Math.abs(ef.tesouro) > 0.004) S.tesouroData = today();
     var precosAntesAj = JSON.parse(JSON.stringify(S.precos || {}));
+    var medioAntesAj = JSON.parse(JSON.stringify(S.medio || {}));
     if (ajustePorFoto && precosDoPrint) {
       S.precos = S.precos || {};
       Object.keys(precosDoPrint).forEach(function (k) { S.precos[k] = { valor: precosDoPrint[k], data: today(), fonte: "print" }; });
     }
-    precosDoPrint = null;
-    registrar({ tipo: "ajuste", titulo: ajustePorFoto ? "Valores atualizados pelo print" : "Valores atualizados", detalhe: "conferidos com o app do banco", efeito: ef, precosAntes: precosAntesAj });
+    if (ajustePorFoto) aplicarMedioDoPrint();
+    precosDoPrint = null; medioDoPrint = null;
+    registrar({ tipo: "ajuste", titulo: ajustePorFoto ? "Valores atualizados pelo print" : "Valores atualizados", detalhe: "conferidos com o app do banco", efeito: ef, precosAntes: precosAntesAj, medioAntes: medioAntesAj });
     ajustePorFoto = false;
     renderAll();
     toast("Carteira atualizada");
@@ -1039,7 +1053,8 @@ footer { font-size: 12.5px; color: var(--muted); }
   // ---------------- Ler print do Nubank (no próprio celular) ----------------
   // Lê o texto de um print do app do Nubank. Reconhece quatro telas:
   //  "carteira"   (Minha carteira): Total bruto, Tesouro direto, Fundos, Bolsa de valores, Saldo disponível
-  //  "bolsa"      (Distribuição da Bolsa): cada ativo com valor, Quantidade e Cotação atual
+  //  "bolsa"      (Distribuição da Bolsa): cada ativo com valor da posição, Quantidade, Preço Médio e Cotação atual.
+  //               O preço por cota vem de valor ÷ quantidade, porque a "Cotação atual" do Nubank às vezes fica desatualizada.
   //  "pendentes"  (Histórico, parte "Lançamentos futuros"): o que ainda está em processamento
   //  "historico"  (Histórico só com "Concluídas"): nada a somar, já está nos valores
   function lerPrint(texto) {
@@ -1100,6 +1115,7 @@ footer { font-size: 12.5px; color: var(--muted); }
         if (pm) { pendente = true; dataAtual = linhas[i].replace(/^.*?para\s+/i, ""); continue; }
         if (RE_DATA_CONCLUIDA.test(l)) { pendente = false; continue; }
         if (!pendente) continue;
+        if (/cancelad/.test(N.slice(i, i + 3).join(" "))) continue;
         if (/aplicacao\s*tesouro/.test(l)) { r.tesouro += primeiroValor(i, i + 2) || 0; r.itens++; continue; }
         if (/resgate\s*fundo/.test(l)) { r.resgate += primeiroValor(i, i + 2) || 0; r.resgateData = r.resgateData || dataAtual; r.itens++; continue; }
         if (/compra\s*de\s*etf/.test(l)) {
@@ -1139,21 +1155,25 @@ footer { font-size: 12.5px; color: var(--muted); }
       }
       inicios.forEach(function (st, idx) {
         var fim = idx + 1 < inicios.length ? inicios[idx + 1].i : N.length;
-        var iQ = -1, iC = -1;
+        var iQ = -1, iC = -1, iM = -1;
         for (var c = st.i; c < fim; c++) {
           if (iQ < 0 && /quantidade/.test(N[c])) iQ = c;
           if (iC < 0 && /cotacao\s*atual/.test(N[c])) iC = c;
+          if (iM < 0 && /preco\s*medio/.test(N[c])) iM = c;
         }
         var cotas = null;
         if (iQ >= 0) { var qm = /quantidade\s*:?\s*(\S+)/.exec(N[iQ]); if (qm) cotas = inteiroOcr(qm[1]); }
         var valor = primeiroValor(st.i, iQ >= 0 ? iQ : Math.min(fim, st.i + 4));
         var cotacao = iC >= 0 ? primeiroValor(iC, iC + 1) : null;
-        // Confere: valor ÷ cotação tem que dar um número inteiro de cotas.
-        if (valor && cotacao) {
+        var medio = iM >= 0 ? primeiroValor(iM, iM + 1) : null;
+        // Sem quantidade legível: tenta valor ÷ cotação, que precisa dar um número inteiro de cotas.
+        if (cotas == null && valor && cotacao) {
           var est = valor / cotacao;
-          if (Math.abs(est - Math.round(est)) < 0.03 && Math.round(est) > 0 && Math.round(est) !== cotas) cotas = Math.round(est);
+          if (Math.abs(est - Math.round(est)) < 0.03 && Math.round(est) > 0) cotas = Math.round(est);
         }
-        r.ativos[st.tk] = { cotas: cotas, valor: valor, cotacao: cotacao };
+        // Preço por cota de hoje = valor da posição ÷ quantidade (bate com o total do Nubank).
+        var preco = valor && cotas ? Math.round(valor / cotas * 100) / 100 : cotacao;
+        r.ativos[st.tk] = { cotas: cotas, valor: valor, cotacao: cotacao, medio: medio, preco: preco };
       });
       return r;
     }
@@ -1176,7 +1196,7 @@ footer { font-size: 12.5px; color: var(--muted); }
   // precoAtual(k) devolve {valor} ou null. Retorna {n, precos, lidos, avisos, soHistorico}.
   function combinarPrints(lidas, atual, precoAtual) {
     var n = { tesouro: atual.tesouro, ivvbCotas: atual.ivvbCotas, bovaCotas: atual.bovaCotas, outras: atual.outras, saldo: atual.saldo };
-    var precos = {}, lidos = [], avisos = [];
+    var precos = {}, medios = {}, lidos = [], avisos = [];
     function brl(v) { return "R$ " + v.toFixed(2).replace(".", ",").replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
     function r2(v) { return Math.round(v * 100) / 100; }
     function tol(v) { return Math.max(2, Math.abs(v) * 0.01); }
@@ -1237,8 +1257,9 @@ footer { font-size: 12.5px; color: var(--muted); }
         var campo = k + "Cotas";
         if (A[k] && A[k].cotas != null) {
           n[campo] = A[k].cotas + (pend ? pend[k] : 0);
-          if (A[k].cotacao) precos[k] = A[k].cotacao;
-          valorConhecido += A[k].valor || (A[k].cotas * (A[k].cotacao || 0));
+          if (A[k].preco) precos[k] = A[k].preco;
+          if (A[k].medio) medios[k] = A[k].medio;
+          valorConhecido += A[k].valor || (A[k].cotas * (A[k].preco || 0));
         } else if (!A[k] && completo && !esperaPendente) {
           n[campo] = pend ? pend[k] : 0;
         } else {
@@ -1260,7 +1281,7 @@ footer { font-size: 12.5px; color: var(--muted); }
       if (pend && (pend.ivvb || pend.bova)) partes.push("contando compras em processamento");
       if (n.outras > 0) partes.push("outras ações " + brl(n.outras) + (nomesOutras.length ? " (" + nomesOutras.join(", ") + ")" : ""));
       lidos.push(partes.join(", "));
-      if (precos.ivvb || precos.bova) lidos.push("cotações " + ["ivvb", "bova"].filter(function (k) { return precos[k]; }).map(function (k) { return NOME[k] + " " + brl(precos[k]); }).join(" e "));
+      if (precos.ivvb || precos.bova) lidos.push("valor por cota hoje " + ["ivvb", "bova"].filter(function (k) { return precos[k]; }).map(function (k) { return NOME[k] + " " + brl(precos[k]) + (medios[k] ? " (médio " + brl(medios[k]) + ")" : ""); }).join(" e "));
       if (esperaPendente) avisos.push("O Nubank mostra uma compra em processamento que ainda não aparece na Bolsa. Mande também o print de Lançamentos futuros para ela entrar.");
     } else if (cart && cart.bolsa != null) {
       var pi = precoAtual("ivvb"), pb = precoAtual("bova");
@@ -1277,7 +1298,7 @@ footer { font-size: 12.5px; color: var(--muted); }
     if (pend && pend.resgate > 0) avisos.push("O resgate de " + brl(pend.resgate) + (pend.resgateData ? " está previsto para " + pend.resgateData.toLowerCase() : " ainda vai cair") + ". Quando cair no saldo, toque em Entrou dinheiro.");
     else if (cart && cart.fundos > 0) avisos.push("O print mostra " + brl(cart.fundos) + " em fundos. Fundos ficam fora do plano; quando resgatar, o dinheiro aparece no saldo.");
     if (historico && !pend) avisos.push("O print do histórico só tem movimentações concluídas, que já aparecem nos valores acima. Não somei nada dele.");
-    return { n: n, precos: precos, lidos: lidos, avisos: avisos, soHistorico: historico && !cart && !bolsas.length && !pend };
+    return { n: n, precos: precos, medios: medios, lidos: lidos, avisos: avisos, soHistorico: historico && !cart && !bolsas.length && !pend };
   }
 
   var TESS_URL = "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";
@@ -1353,7 +1374,12 @@ footer { font-size: 12.5px; color: var(--muted); }
 
   var fotoDestino = "ajuste";
   var ajustePorFoto = false;
-  var precosDoPrint = null;
+  var precosDoPrint = null, medioDoPrint = null;
+  function aplicarMedioDoPrint() {
+    if (!medioDoPrint) return;
+    S.medio = S.medio || {};
+    Object.keys(medioDoPrint).forEach(function (k) { S.medio[k] = medioDoPrint[k]; });
+  }
   function escolherFoto(destino) { fotoDestino = destino; $("foto-input").value = ""; $("foto-input").click(); }
   $("btn-foto").addEventListener("click", function () { escolherFoto("ajuste"); });
   $("s-foto").addEventListener("click", function () { escolherFoto("setup"); });
@@ -1368,6 +1394,7 @@ footer { font-size: 12.5px; color: var(--muted); }
       var base = S || { tesouro: 0, ivvbCotas: 0, bovaCotas: 0, outras: 0, saldo: 0 };
       var m = combinarPrints(lidas, base, precoAtual);
       precosDoPrint = Object.keys(m.precos).length ? m.precos : null;
+      medioDoPrint = m.medios && Object.keys(m.medios).length ? m.medios : null;
       if (!m.lidos.length) {
         status.className = "formmsg bad";
         status.textContent = m.soHistorico
@@ -1556,13 +1583,23 @@ footer { font-size: 12.5px; color: var(--muted); }
     if (c.ivvbQ > 0) partes.push(c.ivvbQ + " IVVB11");
     if (c.bovaQ > 0) partes.push(c.bovaQ + " BOVA11");
     var precosAntes = JSON.parse(JSON.stringify(S.precos || {}));
+    var medioAntes = JSON.parse(JSON.stringify(S.medio || {}));
     S.precos = S.precos || {};
-    if (c.ivvbQ > 0) S.precos.ivvb = { valor: c.ivvbP, data: today(), fonte: "compra" };
-    if (c.bovaQ > 0) S.precos.bova = { valor: c.bovaP, data: today(), fonte: "compra" };
+    S.medio = S.medio || {};
+    [["ivvb", c.ivvbQ, c.ivvbP], ["bova", c.bovaQ, c.bovaP]].forEach(function (x) {
+      var k = x[0], q = x[1], preco = x[2];
+      if (!(q > 0)) return;
+      S.precos[k] = { valor: preco, data: today(), fonte: "compra" };
+      // preço médio ponderado: (médio antigo × cotas antigas + preço pago × cotas novas) ÷ total
+      var qAntes = k === "ivvb" ? S.ivvbCotas : S.bovaCotas, mAntes = S.medio[k];
+      if (qAntes === 0) S.medio[k] = preco;
+      else if (mAntes > 0) S.medio[k] = r2((mAntes * qAntes + preco * q) / (qAntes + q));
+      else delete S.medio[k];
+    });
     registrar({
       tipo: "compra", titulo: "Compra: " + partes.join(", "), detalhe: "",
       efeito: { saldo: -c.total, tesouro: r2(c.tesouro), ivvbCotas: c.ivvbQ, bovaCotas: c.bovaQ },
-      precosAntes: precosAntes
+      precosAntes: precosAntes, medioAntes: medioAntes
     });
     $("confirmar").hidden = true;
     $("p-ivvb").value = ""; $("p-bova").value = "";
