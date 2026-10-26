@@ -6,6 +6,6 @@ App de bolso para o aporte mensal: diz quanto comprar de Tesouro IPCA+ 2032, IVV
 - Abas: Carteira (o que você tem e o saldo), Comprar (o que comprar agora e confirmar as compras), Notícias (boletim do mês) e Guia.
 - Ao confirmar uma compra, as cotas entram na carteira e o valor sai do saldo. Dá para desfazer a última movimentação.
 - A carteira e as movimentações ficam guardadas só no aparelho (localStorage). Nada pessoal vai para este repositório.
-- `boletim.json` (notícias, indicadores e empresas em destaque) e `precos.json` (cotas de IVVB11 e BOVA11) são atualizados pelo Claude todo dia 10 de manhã, antes do aporte do mês com Selic, IPCA, Tesouro IPCA+, Ibovespa, dólar, S&P 500, preços das cotas e as notícias do mês.
+- `boletim.json` (notícias, indicadores e empresas em destaque) e `precos.json` (cotas de IVVB11 e BOVA11) são atualizados pelo Claude todo dia 10 de manhã, antes do aporte do mês.
 
 Ferramenta educativa. Não é recomendação de investimento.
