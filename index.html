@@ -1020,16 +1020,22 @@ footer { font-size: 12.5px; color: var(--muted); }
 
 
   // ---------------- Ler print do Nubank (no próprio celular) ----------------
-  // Lê o texto de um print do app do Nubank. Reconhece três telas:
-  //  "carteira"  (Minha carteira): Tesouro direto, Fundos, Bolsa de valores, Saldo disponível
-  //  "bolsa"     (Distribuição / Meus ativos da Bolsa): cada ETF com Quantidade e Cotação atual
-  //  "pendentes" (Lançamentos futuros): aplicações, compras e resgates ainda em processamento
+  // Lê o texto de um print do app do Nubank. Reconhece quatro telas:
+  //  "carteira"   (Minha carteira): Total bruto, Tesouro direto, Fundos, Bolsa de valores, Saldo disponível
+  //  "bolsa"      (Distribuição da Bolsa): cada ativo com valor, Quantidade e Cotação atual
+  //  "pendentes"  (Histórico, parte "Lançamentos futuros"): o que ainda está em processamento
+  //  "historico"  (Histórico só com "Concluídas"): nada a somar, já está nos valores
   function lerPrint(texto) {
     function norm(s) { return s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase(); }
-    var linhas = String(texto || "").split(/\n+/).map(function (l) { return l.trim(); }).filter(Boolean);
+    // O leitor às vezes troca o número 1 pela letra I ou l nos códigos ("IVVBII"). Corrige antes de tudo.
+    function corrigeTicker(l) {
+      return l.replace(/\b([A-Z]{4})\s?([0-9Il|!]{1,2})(?![A-Za-z])/g, function (m, a, b) { return a + b.replace(/[Il|!]/g, "1"); });
+    }
+    var linhas = String(texto || "").split(/\n+/).map(function (l) { return corrigeTicker(l.trim()); }).filter(Boolean);
     var N = linhas.map(norm);
     var tudo = N.join("\n");
-    // O Nubank sempre mostra centavos, então "R$80519" (vírgula perdida na leitura) vira 805,19.
+
+    // Valores em reais. O Nubank sempre mostra centavos, então "R$80519" (vírgula perdida) vira 805,19.
     var RE_RS = /R\s?[$S§5s]\s?(\d[\d.]*)(?:,(\d{2}))?/g;
     var RE_MONEY = /(\d{1,3}(?:\.\d{3})*,\d{2})(?!\s*%)/g;
     function valoresEm(i) {
@@ -1049,67 +1055,100 @@ footer { font-size: 12.5px; color: var(--muted); }
       for (var j = de; j < Math.min(linhas.length, ate); j++) { var v = valoresEm(j); if (v.length) return v[0]; }
       return null;
     }
-    function acha(re, de) { for (var i = de || 0; i < N.length; i++) if (re.test(N[i])) return i; return -1; }
-    var RE_TICKER = { ivvb: /\bivv\s*b\s*[1il]{2}\b/, bova: /\bbova\s*[1il]{2}\b/ };
-    var RE_QUALQUER_TICKER = /\b[a-z]{4}\s*\d{1,2}\b/;
+    function acha(re, de, ate) { for (var i = de || 0; i < Math.min(N.length, ate || N.length); i++) if (re.test(N[i])) return i; return -1; }
+    function tickerDe(l) {
+      if (/\bivvb\s*11\b/.test(l)) return "ivvb";
+      if (/\bbova\s*11\b/.test(l)) return "bova";
+      var g = /\b([a-z]{4}\d{1,2})\b/.exec(l);
+      return g ? g[1] : null;
+    }
+    function inteiroOcr(s) { var t = String(s).replace(/[il|!]/g, "1").replace(/o/g, "0"); return /^\d+$/.test(t) ? parseInt(t, 10) : null; }
 
-    var r = { tipo: null };
+    var r = { tipo: null, processando: /processamento/.test(tudo) };
     var iSaldo = acha(/saldo\s*dispon/);
     if (iSaldo >= 0) r.saldo = primeiroValor(iSaldo, iSaldo + 3);
 
-    if (/lancamentos\s*futuros|aplicacao\s*tesouro|compra\s*de\s*etf|resgate\s*fundo/.test(tudo)) {
-      r.tipo = "pendentes";
-      r.tesouro = 0; r.ivvb = 0; r.bova = 0; r.ivvbValor = 0; r.bovaValor = 0; r.resgate = 0; r.resgateData = "";
-      var dataAtual = "";
+    // ---- Histórico de movimentações ----
+    if (/lancamentos\s*futuros|historico\s*de\s*moviment|conclu[il]das|aplicacao\s*tesouro|compra\s*de\s*etf|resgate\s*(fundo|caixinha)/.test(tudo)) {
+      r.tesouro = 0; r.ivvb = 0; r.bova = 0; r.ivvbValor = 0; r.bovaValor = 0; r.resgate = 0; r.resgateData = ""; r.itens = 0;
+      var MES = "(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)";
+      var RE_PARA = new RegExp("(^|\\s)para\\s+(hoje|amanha|\\d{1,2}\\s*" + MES + ")");
+      var RE_DATA_CONCLUIDA = new RegExp("^\\W{0,3}\\d{1,2}\\s*" + MES + "\\b");
+      var pendente = false, dataAtual = "";
       for (var i = 0; i < N.length; i++) {
-        var dm = /^para\s+(.+)$/.exec(N[i]);
-        if (dm) { dataAtual = linhas[i].replace(/^para\s+/i, ""); continue; }
-        if (/aplicacao\s*tesouro/.test(N[i])) { r.tesouro += primeiroValor(i, i + 2) || 0; continue; }
-        if (/resgate/.test(N[i])) { r.resgate += primeiroValor(i, i + 2) || 0; r.resgateData = r.resgateData || dataAtual; continue; }
-        if (/compra\s*de\s*etf/.test(N[i])) {
+        var l = N[i];
+        if (/lancamentos\s*futuros/.test(l)) { pendente = true; continue; }
+        if (/conclu[il]das/.test(l)) { pendente = false; continue; }
+        var pm = RE_PARA.exec(l);
+        if (pm) { pendente = true; dataAtual = linhas[i].replace(/^.*?para\s+/i, ""); continue; }
+        if (RE_DATA_CONCLUIDA.test(l)) { pendente = false; continue; }
+        if (!pendente) continue;
+        if (/aplicacao\s*tesouro/.test(l)) { r.tesouro += primeiroValor(i, i + 2) || 0; r.itens++; continue; }
+        if (/resgate\s*fundo/.test(l)) { r.resgate += primeiroValor(i, i + 2) || 0; r.resgateData = r.resgateData || dataAtual; r.itens++; continue; }
+        if (/compra\s*de\s*etf/.test(l)) {
           var val = primeiroValor(i, i + 2) || 0;
           for (var j = i; j < Math.min(N.length, i + 4); j++) {
-            ["ivvb", "bova"].forEach(function (k) {
-              if (RE_TICKER[k].test(N[j])) {
-                var q = /(\d+)\s*cotas?\b/.exec(N[j]) || /(\d+)\s*cotas?\b/.exec(N[j + 1] || "");
-                var n = q ? parseInt(q[1], 10) : 1;
-                r[k] += n; r[k + "Valor"] += val;
-              }
-            });
+            var t = tickerDe(N[j]);
+            if (t === "ivvb" || t === "bova") {
+              var q = /(\S+)\s*cotas?\b/.exec(N[j]);
+              var n = q ? (inteiroOcr(q[1]) || 1) : 1;
+              r[t] += n; r[t + "Valor"] += val; r.itens++;
+              break;
+            }
           }
         }
       }
+      r.tesouro = Math.round(r.tesouro * 100) / 100;
+      r.resgate = Math.round(r.resgate * 100) / 100;
+      r.tipo = r.itens > 0 ? "pendentes" : "historico";
       return r;
     }
 
-    if (/meus\s*ativos\s*da\s*bolsa|total\s*em\s*bolsa|cotacao\s*atual|quantidade/.test(tudo)) {
+    // ---- Bolsa (Distribuição) ----
+    if (/meus\s*ativos\s*da\s*bolsa|total\s*em\s*bolsa|cotacao\s*atual|preco\s*medio|quantidade/.test(tudo)) {
       r.tipo = "bolsa";
       var iTot = acha(/total\s*em\s*bolsa/);
       r.total = iTot >= 0 ? primeiroValor(iTot, iTot + 3) : null;
+      var cm = /meus\s*ativos\s*da\s*bolsa\s*\(?\s*(\d+)/.exec(tudo);
+      r.contagem = cm ? parseInt(cm[1], 10) : null;
       r.ativos = {};
-      // cada ativo: da linha do ticker até a próxima linha com ticker
       var inicios = [];
-      for (var a = 0; a < N.length; a++) if (RE_QUALQUER_TICKER.test(N[a]) && /etf|fundo|·|-|>/.test(N[a] + " " + (N[a + 1] || ""))) inicios.push(a);
-      inicios.forEach(function (ini, idx) {
-        var fim = idx + 1 < inicios.length ? inicios[idx + 1] : N.length;
-        var chave = RE_TICKER.ivvb.test(N[ini]) ? "ivvb" : RE_TICKER.bova.test(N[ini]) ? "bova" : "outro" + idx;
-        var bloco = N.slice(ini, fim).join("\n");
-        var q = /quantidade\s*:?\s*(\d+)/.exec(bloco) || /(\d+)\s*cotas?\b/.exec(bloco);
-        var iCot = -1; for (var c = ini; c < fim; c++) if (/cotacao\s*atual/.test(N[c])) { iCot = c; break; }
-        r.ativos[chave] = {
-          cotas: q ? parseInt(q[1], 10) : null,
-          valor: primeiroValor(ini, Math.min(fim, ini + 4)),
-          cotacao: iCot >= 0 ? primeiroValor(iCot, iCot + 1) : null
-        };
+      for (var a = 0; a < N.length; a++) {
+        if (/total\s*em\s*bolsa|saldo/.test(N[a])) continue;
+        var tk = tickerDe(N[a]);
+        if (!tk) continue;
+        var ctx = N[a] + " " + (N[a + 1] || "") + " " + (N[a + 2] || "");
+        if (/>|·|-|—|fundo de indice|etf|acao|fii/.test(ctx)) inicios.push({ i: a, tk: tk });
+      }
+      inicios.forEach(function (st, idx) {
+        var fim = idx + 1 < inicios.length ? inicios[idx + 1].i : N.length;
+        var iQ = -1, iC = -1;
+        for (var c = st.i; c < fim; c++) {
+          if (iQ < 0 && /quantidade/.test(N[c])) iQ = c;
+          if (iC < 0 && /cotacao\s*atual/.test(N[c])) iC = c;
+        }
+        var cotas = null;
+        if (iQ >= 0) { var qm = /quantidade\s*:?\s*(\S+)/.exec(N[iQ]); if (qm) cotas = inteiroOcr(qm[1]); }
+        var valor = primeiroValor(st.i, iQ >= 0 ? iQ : Math.min(fim, st.i + 4));
+        var cotacao = iC >= 0 ? primeiroValor(iC, iC + 1) : null;
+        // Confere: valor ÷ cotação tem que dar um número inteiro de cotas.
+        if (valor && cotacao) {
+          var est = valor / cotacao;
+          if (Math.abs(est - Math.round(est)) < 0.03 && Math.round(est) > 0 && Math.round(est) !== cotas) cotas = Math.round(est);
+        }
+        r.ativos[st.tk] = { cotas: cotas, valor: valor, cotacao: cotacao };
       });
       return r;
     }
 
-    if (/tesouro\s*direto|bolsa\s*de\s*valor|minha\s*carteira/.test(tudo)) {
+    // ---- Minha carteira ----
+    if (/tesouro\s*direto|bolsa\s*de\s*valor|minha\s*carteira|total\s*bruto/.test(tudo)) {
       r.tipo = "carteira";
+      var iTB = acha(/total\s*bruto/);
+      r.totalBruto = iTB >= 0 ? primeiroValor(iTB, iTB + 2) : null;
       [["tesouro", /tesouro\s*dire/], ["bolsa", /bolsa\s*de\s*valor/], ["fundos", /fundos?\s*de\s*invest/]].forEach(function (x) {
         var i = acha(x[1]);
-        if (i >= 0) r[x[0]] = primeiroValor(i + (valoresEm(i).length ? 0 : 1), i + 3);
+        if (i >= 0) r[x[0]] = primeiroValor(i, i + 3);
       });
       return r;
     }
@@ -1117,45 +1156,100 @@ footer { font-size: 12.5px; color: var(--muted); }
   }
 
   // Junta as leituras de um ou mais prints com o que a carteira já sabe.
-  // precoAtual(k) devolve {valor} ou null. Retorna {n, precos, lidos, avisos}.
+  // precoAtual(k) devolve {valor} ou null. Retorna {n, precos, lidos, avisos, soHistorico}.
   function combinarPrints(lidas, atual, precoAtual) {
     var n = { tesouro: atual.tesouro, ivvbCotas: atual.ivvbCotas, bovaCotas: atual.bovaCotas, outras: atual.outras, saldo: atual.saldo };
     var precos = {}, lidos = [], avisos = [];
-    function ultima(tipo) { var x = null; lidas.forEach(function (l) { if (l.tipo === tipo) x = l; }); return x; }
-    var cart = ultima("carteira"), bolsa = ultima("bolsa"), pend = ultima("pendentes");
     function brl(v) { return "R$ " + v.toFixed(2).replace(".", ",").replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
+    function r2(v) { return Math.round(v * 100) / 100; }
+    function tol(v) { return Math.max(2, Math.abs(v) * 0.01); }
+    var NOME = { ivvb: "IVVB11", bova: "BOVA11" };
 
-    var saldoLido = cart && cart.saldo != null ? cart.saldo : bolsa && bolsa.saldo != null ? bolsa.saldo : pend && pend.saldo != null ? pend.saldo : null;
+    var carts = lidas.filter(function (l) { return l.tipo === "carteira"; });
+    var cart = carts.length ? carts[carts.length - 1] : null;
+    var bolsas = lidas.filter(function (l) { return l.tipo === "bolsa"; });
+    var pend = null;
+    lidas.forEach(function (l) { if (l.tipo === "pendentes" && (!pend || l.itens > pend.itens)) pend = l; });
+    var historico = lidas.some(function (l) { return l.tipo === "historico"; });
+
+    // Junta vários prints da tela Bolsa (quando a lista não cabe numa tela só)
+    var bolsa = null;
+    if (bolsas.length) {
+      bolsa = { ativos: {}, total: null, contagem: null, processando: false };
+      bolsas.forEach(function (b) {
+        if (bolsa.total == null && b.total != null) bolsa.total = b.total;
+        if (b.contagem != null) bolsa.contagem = Math.max(bolsa.contagem || 0, b.contagem);
+        if (b.processando) bolsa.processando = true;
+        Object.keys(b.ativos || {}).forEach(function (k) {
+          var x = b.ativos[k], y = bolsa.ativos[k];
+          if (!y || (y.cotas == null && x.cotas != null)) bolsa.ativos[k] = x;
+        });
+      });
+    }
+
+    var saldoLido = null;
+    [cart].concat(bolsas, [pend]).forEach(function (l) { if (saldoLido == null && l && l.saldo != null) saldoLido = l.saldo; });
     if (saldoLido != null) { n.saldo = saldoLido; lidos.push("saldo " + brl(saldoLido)); }
 
+    // Tesouro
     if (cart && cart.tesouro != null) {
       n.tesouro = cart.tesouro;
-      if (pend && pend.tesouro > 0) { n.tesouro = Math.round((cart.tesouro + pend.tesouro) * 100) / 100; lidos.push("Tesouro " + brl(cart.tesouro) + " + " + brl(pend.tesouro) + " em processamento"); }
+      if (pend && pend.tesouro > 0) { n.tesouro = r2(cart.tesouro + pend.tesouro); lidos.push("Tesouro " + brl(cart.tesouro) + " + " + brl(pend.tesouro) + " em processamento"); }
       else lidos.push("Tesouro " + brl(cart.tesouro));
+      if (cart.processando && !pend) avisos.push("O Nubank mostra transações em processamento. Mande também o print de Lançamentos futuros (Histórico de movimentações) para elas entrarem.");
     } else if (pend && pend.tesouro > 0) {
       avisos.push("Vi " + brl(pend.tesouro) + " de Tesouro em processamento. Para somar certo, mande junto o print da tela Minha carteira.");
     }
 
+    // Confere com o Total bruto do Nubank
+    if (cart && cart.totalBruto != null && cart.tesouro != null) {
+      var soma = (cart.tesouro || 0) + (cart.bolsa || 0) + (cart.fundos || 0);
+      if (Math.abs(soma - cart.totalBruto) > 1) avisos.push("Atenção: Tesouro + Bolsa" + (cart.fundos ? " + Fundos" : "") + " deu " + brl(soma) + ", mas o Total bruto do Nubank é " + brl(cart.totalBruto) + ". Confira os números antes de salvar.");
+    }
+
+    // ETFs e outras ações
     if (bolsa) {
-      var A = bolsa.ativos || {};
-      n.ivvbCotas = A.ivvb && A.ivvb.cotas != null ? A.ivvb.cotas : 0;
-      n.bovaCotas = A.bova && A.bova.cotas != null ? A.bova.cotas : 0;
-      ["ivvb", "bova"].forEach(function (k) { if (A[k] && A[k].cotacao) precos[k] = A[k].cotacao; });
-      var outras = 0;
-      Object.keys(A).forEach(function (k) { if (/^outro/.test(k) && A[k].valor) outras += A[k].valor; });
-      n.outras = Math.round(outras * 100) / 100;
-      if (pend) {
-        if (pend.ivvb) { n.ivvbCotas += pend.ivvb; if (!precos.ivvb && pend.ivvbValor) precos.ivvb = Math.round(pend.ivvbValor / pend.ivvb * 100) / 100; }
-        if (pend.bova) { n.bovaCotas += pend.bova; if (!precos.bova && pend.bovaValor) precos.bova = Math.round(pend.bovaValor / pend.bova * 100) / 100; }
+      var A = bolsa.ativos;
+      var ref = bolsa.total != null ? bolsa.total : cart && cart.bolsa != null ? cart.bolsa : null;
+      var somaAchada = 0, qtdAchada = 0;
+      Object.keys(A).forEach(function (k) { if (A[k].valor) somaAchada += A[k].valor; qtdAchada++; });
+      var completo = (ref != null && Math.abs(somaAchada - ref) <= tol(ref)) || (bolsa.contagem != null && qtdAchada >= bolsa.contagem);
+      var esperaPendente = bolsa.processando && !pend;
+      var valorConhecido = 0;
+      ["ivvb", "bova"].forEach(function (k) {
+        var campo = k + "Cotas";
+        if (A[k] && A[k].cotas != null) {
+          n[campo] = A[k].cotas + (pend ? pend[k] : 0);
+          if (A[k].cotacao) precos[k] = A[k].cotacao;
+          valorConhecido += A[k].valor || (A[k].cotas * (A[k].cotacao || 0));
+        } else if (!A[k] && completo && !esperaPendente) {
+          n[campo] = pend ? pend[k] : 0;
+        } else {
+          // não deu para ter certeza: mantém o que o app já tinha
+          var pa = precoAtual(k);
+          valorConhecido += (A[k] && A[k].valor) || n[campo] * (pa ? pa.valor : 0);
+          if (n[campo] > 0 || (A[k] && A[k].valor)) avisos.push("Não consegui ler a quantidade de " + NOME[k] + " no print da Bolsa; mantive " + n[campo] + (n[campo] === 1 ? " cota" : " cotas") + ". Confira abaixo.");
+        }
+        if (pend && pend[k] && !precos[k] && pend[k + "Valor"]) precos[k] = r2(pend[k + "Valor"] / pend[k]);
+      });
+      var outras = 0, nomesOutras = [];
+      Object.keys(A).forEach(function (k) { if (k !== "ivvb" && k !== "bova" && A[k].valor) { outras += A[k].valor; nomesOutras.push(k.toUpperCase()); } });
+      if (ref != null) {
+        var falta = ref - valorConhecido - outras;
+        if (falta > tol(ref)) { outras += falta; avisos.push(brl(falta) + " da Bolsa não apareceu nos prints; contei como outras ações. Se forem IVVB11 ou BOVA11, mande o print com eles aparecendo."); }
       }
+      n.outras = r2(outras);
       var partes = [n.ivvbCotas + " IVVB11", n.bovaCotas + " BOVA11"];
       if (pend && (pend.ivvb || pend.bova)) partes.push("contando compras em processamento");
-      if (n.outras > 0) partes.push("outras ações " + brl(n.outras));
+      if (n.outras > 0) partes.push("outras ações " + brl(n.outras) + (nomesOutras.length ? " (" + nomesOutras.join(", ") + ")" : ""));
       lidos.push(partes.join(", "));
+      if (precos.ivvb || precos.bova) lidos.push("cotações " + ["ivvb", "bova"].filter(function (k) { return precos[k]; }).map(function (k) { return NOME[k] + " " + brl(precos[k]); }).join(" e "));
+      if (esperaPendente) avisos.push("O Nubank mostra uma compra em processamento que ainda não aparece na Bolsa. Mande também o print de Lançamentos futuros para ela entrar.");
     } else if (cart && cart.bolsa != null) {
       var pi = precoAtual("ivvb"), pb = precoAtual("bova");
       var vi = n.ivvbCotas * (pi ? pi.valor : 0), vb = n.bovaCotas * (pb ? pb.valor : 0);
-      n.outras = Math.max(0, Math.round((cart.bolsa - vi - vb) * 100) / 100);
+      n.outras = Math.max(0, r2(cart.bolsa - vi - vb));
+      if (n.outras <= tol(cart.bolsa)) n.outras = 0;
       lidos.push("bolsa " + brl(cart.bolsa));
       avisos.push("Para separar IVVB11, BOVA11 e outras ações, mande também o print da tela Bolsa de valores. Por enquanto mantive suas cotas.");
       if (pend && (pend.ivvb || pend.bova)) avisos.push("A compra de ETF em processamento só entra se você mandar junto o print da Bolsa.");
@@ -1165,7 +1259,8 @@ footer { font-size: 12.5px; color: var(--muted); }
 
     if (pend && pend.resgate > 0) avisos.push("O resgate de " + brl(pend.resgate) + (pend.resgateData ? " está previsto para " + pend.resgateData.toLowerCase() : " ainda vai cair") + ". Quando cair no saldo, toque em Entrou dinheiro.");
     else if (cart && cart.fundos > 0) avisos.push("O print mostra " + brl(cart.fundos) + " em fundos. Fundos ficam fora do plano; quando resgatar, o dinheiro aparece no saldo.");
-    return { n: n, precos: precos, lidos: lidos, avisos: avisos };
+    if (historico && !pend) avisos.push("O print do histórico só tem movimentações concluídas, que já aparecem nos valores acima. Não somei nada dele.");
+    return { n: n, precos: precos, lidos: lidos, avisos: avisos, soHistorico: historico && !cart && !bolsas.length && !pend };
   }
 
   var TESS_URL = "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";
@@ -1258,7 +1353,9 @@ footer { font-size: 12.5px; color: var(--muted); }
       precosDoPrint = Object.keys(m.precos).length ? m.precos : null;
       if (!m.lidos.length) {
         status.className = "formmsg bad";
-        status.textContent = "Não consegui achar os números nesse print. Mande prints das telas Minha carteira e Bolsa de valores, sem cortar, ou preencha à mão.";
+        status.textContent = m.soHistorico
+          ? "Esse print só tem movimentações concluídas, que já estão nos valores do Nubank. Mande os prints de Minha carteira e Bolsa de valores."
+          : "Não consegui achar os números nesse print. Mande prints das telas Minha carteira e Bolsa de valores, sem cortar, ou preencha à mão.";
         return;
       }
       status.className = "formmsg info";
